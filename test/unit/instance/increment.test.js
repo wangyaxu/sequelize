@@ -1,25 +1,26 @@
 'use strict';
 
-const chai = require('chai'),
-  expect = chai.expect,
-  Support   = require(__dirname + '/../support'),
-  current   = Support.sequelize,
-  Sequelize = Support.Sequelize,
-  sinon     = require('sinon');
+var chai = require('chai')
+  , expect = chai.expect
+  , Support   = require(__dirname + '/../support')
+  , current   = Support.sequelize
+  , Sequelize = Support.Sequelize
+  , sinon     = require('sinon');
 
-describe(Support.getTestDialectTeaser('Instance'), () => {
-  describe('increment', () => {
-    describe('options tests', () => {
-      let stub, instance;
-      const Model = current.define('User', {
-        id: {
-          type:          Sequelize.BIGINT,
-          primaryKey:    true,
-          autoIncrement: true
-        }
-      });
+describe(Support.getTestDialectTeaser('Instance'), function() {
+  describe('increment', function () {
+    describe('options tests', function() {
+      var stub
+        , Model = current.define('User', {
+          id: {
+            type:          Sequelize.BIGINT,
+            primaryKey:    true,
+            autoIncrement: true,
+          }
+        })
+        , instance;
 
-      before(() => {
+      before(function() {
         stub = sinon.stub(current, 'query').returns(
           Sequelize.Promise.resolve({
             _previousDataValues: {id: 1},
@@ -28,13 +29,13 @@ describe(Support.getTestDialectTeaser('Instance'), () => {
         );
       });
 
-      after(() => {
+      after(function() {
         stub.restore();
       });
 
-      it('should allow increments even if options are not given', () => {
+      it('should allow increments even if options are not given', function () {
         instance = Model.build({id: 1}, {isNewRecord: false});
-        expect(() => {
+        expect(function () {
           instance.increment(['id']);
         }).to.not.throw();
       });

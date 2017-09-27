@@ -1,14 +1,14 @@
 'use strict';
 
-const chai = require('chai'),
-  expect = chai.expect,
-  Support = require(__dirname + '/../support'),
-  DataTypes = require(__dirname + '/../../../lib/data-types'),
-  sinon = require('sinon'),
-  dialect = Support.getTestDialect(),
-  Promise = require('bluebird');
+/* jshint -W030 */
+var chai = require('chai')
+  , expect = chai.expect
+  , Support = require(__dirname + '/../support')
+  , DataTypes = require(__dirname + '/../../../lib/data-types')
+  , sinon = require('sinon')
+  , dialect = Support.getTestDialect();
 
-describe(Support.getTestDialectTeaser('Hooks'), () => {
+describe(Support.getTestDialectTeaser('Hooks'), function() {
   beforeEach(function() {
     this.User = this.sequelize.define('User', {
       username: {
@@ -35,11 +35,11 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
   });
 
 
-  describe('associations', () => {
-    describe('1:1', () => {
-      describe('cascade onUpdate', () => {
+  describe('associations', function() {
+    describe('1:1', function() {
+      describe('cascade onUpdate', function() {
         beforeEach(function() {
-          const self = this;
+          var self = this;
 
           this.Projects = this.sequelize.define('Project', {
             title: DataTypes.STRING
@@ -52,30 +52,30 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
           this.Projects.hasOne(this.Tasks, {onUpdate: 'cascade', hooks: true});
           this.Tasks.belongsTo(this.Projects);
 
-          return this.Projects.sync({ force: true }).then(() => {
+          return this.Projects.sync({ force: true }).then(function() {
             return self.Tasks.sync({ force: true });
           });
         });
 
         it('on success', function() {
-          const self = this;
-          let beforeHook = false,
-            afterHook = false;
+          var self = this
+          , beforeHook = false
+          , afterHook = false;
 
-          this.Tasks.beforeUpdate(() => {
+          this.Tasks.beforeUpdate(function(task, options, fn) {
             beforeHook = true;
-            return Promise.resolve();
+            fn();
           });
 
-          this.Tasks.afterUpdate(() => {
+          this.Tasks.afterUpdate(function(task, options, fn) {
             afterHook = true;
-            return Promise.resolve();
+            fn();
           });
 
-          return this.Projects.create({title: 'New Project'}).then(project => {
-            return self.Tasks.create({title: 'New Task'}).then(task => {
-              return project.setTask(task).then(() => {
-                return project.updateAttributes({id: 2}).then(() => {
+          return this.Projects.create({title: 'New Project'}).then(function(project) {
+            return self.Tasks.create({title: 'New Task'}).then(function(task) {
+              return project.setTask(task).then(function() {
+                return project.updateAttributes({id: 2}).then(function() {
                   expect(beforeHook).to.be.true;
                   expect(afterHook).to.be.true;
                 });
@@ -85,15 +85,15 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
         });
 
         it('on error', function() {
-          const self = this;
+          var self = this;
 
-          this.Tasks.afterUpdate(() => {
-            return Promise.reject(new Error('Whoops!'));
+          this.Tasks.afterUpdate(function(task, options, fn) {
+            fn(new Error('Whoops!'));
           });
 
-          return this.Projects.create({title: 'New Project'}).then(project => {
-            return self.Tasks.create({title: 'New Task'}).then(task => {
-              return project.setTask(task).catch(err => {
+          return this.Projects.create({title: 'New Project'}).then(function(project) {
+            return self.Tasks.create({title: 'New Task'}).then(function(task) {
+              return project.setTask(task).catch(function(err) {
                 expect(err).to.be.instanceOf(Error);
               });
             });
@@ -101,7 +101,7 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
         });
       });
 
-      describe('cascade onDelete', () => {
+      describe('cascade onDelete', function() {
         beforeEach(function() {
           this.Projects = this.sequelize.define('Project', {
             title: DataTypes.STRING
@@ -117,23 +117,23 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
           return this.sequelize.sync({ force: true });
         });
 
-        describe('#remove', () => {
+        describe('#remove', function() {
           it('with no errors', function() {
-            const self = this,
-              beforeProject = sinon.spy(),
-              afterProject = sinon.spy(),
-              beforeTask = sinon.spy(),
-              afterTask = sinon.spy();
+            var self = this
+            , beforeProject = sinon.spy()
+            , afterProject = sinon.spy()
+            , beforeTask = sinon.spy()
+            , afterTask = sinon.spy();
 
             this.Projects.beforeCreate(beforeProject);
             this.Projects.afterCreate(afterProject);
             this.Tasks.beforeDestroy(beforeTask);
             this.Tasks.afterDestroy(afterTask);
 
-            return this.Projects.create({title: 'New Project'}).then(project => {
-              return self.Tasks.create({title: 'New Task'}).then(task => {
-                return project.setTask(task).then(() => {
-                  return project.destroy().then(() => {
+            return this.Projects.create({title: 'New Project'}).then(function(project) {
+              return self.Tasks.create({title: 'New Task'}).then(function(task) {
+                return project.setTask(task).then(function() {
+                  return project.destroy().then(function() {
                     expect(beforeProject).to.have.been.calledOnce;
                     expect(afterProject).to.have.been.calledOnce;
                     expect(beforeTask).to.have.been.calledOnce;
@@ -145,37 +145,37 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
           });
 
           it('with errors', function() {
-            const self = this,
-              CustomErrorText = 'Whoops!';
-            let beforeProject = false,
-              afterProject = false,
-              beforeTask = false,
-              afterTask = false;
+            var self = this
+            , beforeProject = false
+            , afterProject = false
+            , beforeTask = false
+            , afterTask = false
+            , CustomErrorText = 'Whoops!';
 
-            this.Projects.beforeCreate(() => {
+            this.Projects.beforeCreate(function(project, options, fn) {
               beforeProject = true;
-              return Promise.resolve();
+              fn();
             });
 
-            this.Projects.afterCreate(() => {
+            this.Projects.afterCreate(function(project, options, fn) {
               afterProject = true;
-              return Promise.resolve();
+              fn();
             });
 
-            this.Tasks.beforeDestroy(() => {
+            this.Tasks.beforeDestroy(function(task, options, fn) {
               beforeTask = true;
-              return Promise.reject(new Error(CustomErrorText));
+              fn(new Error(CustomErrorText));
             });
 
-            this.Tasks.afterDestroy(() => {
+            this.Tasks.afterDestroy(function(task, options, fn) {
               afterTask = true;
-              return Promise.resolve();
+              fn();
             });
 
-            return this.Projects.create({title: 'New Project'}).then(project => {
-              return self.Tasks.create({title: 'New Task'}).then(task => {
-                return project.setTask(task).then(() => {
-                  return expect(project.destroy()).to.eventually.be.rejectedWith(CustomErrorText).then(() => {
+            return this.Projects.create({title: 'New Project'}).then(function(project) {
+              return self.Tasks.create({title: 'New Task'}).then(function(task) {
+                return project.setTask(task).then(function() {
+                  return expect(project.destroy()).to.eventually.be.rejectedWith(CustomErrorText).then(function () {
                     expect(beforeProject).to.be.true;
                     expect(afterProject).to.be.true;
                     expect(beforeTask).to.be.true;
@@ -188,9 +188,9 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
         });
       });
 
-      describe('no cascade update', () => {
+      describe('no cascade update', function() {
         beforeEach(function() {
-          const self = this;
+          var self = this;
 
           this.Projects = this.sequelize.define('Project', {
             title: DataTypes.STRING
@@ -203,23 +203,23 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
           this.Projects.hasOne(this.Tasks);
           this.Tasks.belongsTo(this.Projects);
 
-          return this.Projects.sync({ force: true }).then(() => {
+          return this.Projects.sync({ force: true }).then(function() {
             return self.Tasks.sync({ force: true });
           });
         });
 
         it('on success', function() {
-          const self = this,
-            beforeHook = sinon.spy(),
-            afterHook = sinon.spy();
+          var self = this
+          , beforeHook = sinon.spy()
+          , afterHook = sinon.spy();
 
           this.Tasks.beforeUpdate(beforeHook);
           this.Tasks.afterUpdate(afterHook);
 
-          return this.Projects.create({title: 'New Project'}).then(project => {
-            return self.Tasks.create({title: 'New Task'}).then(task => {
-              return project.setTask(task).then(() => {
-                return project.updateAttributes({id: 2}).then(() => {
+          return this.Projects.create({title: 'New Project'}).then(function(project) {
+            return self.Tasks.create({title: 'New Task'}).then(function(task) {
+              return project.setTask(task).then(function() {
+                return project.updateAttributes({id: 2}).then(function() {
                   expect(beforeHook).to.have.been.calledOnce;
                   expect(afterHook).to.have.been.calledOnce;
                 });
@@ -229,23 +229,23 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
         });
 
         it('on error', function() {
-          const self = this;
+          var self = this;
 
-          this.Tasks.afterUpdate(() => {
+          this.Tasks.afterUpdate(function(task, options) {
             throw new Error('Whoops!');
           });
 
-          return this.Projects.create({title: 'New Project'}).then(project => {
-            return self.Tasks.create({title: 'New Task'}).then(task => {
+          return this.Projects.create({title: 'New Project'}).then(function(project) {
+            return self.Tasks.create({title: 'New Task'}).then(function(task) {
               return expect(project.setTask(task)).to.be.rejected;
             });
           });
         });
       });
 
-      describe('no cascade delete', () => {
+      describe('no cascade delete', function() {
         beforeEach(function() {
-          const self = this;
+          var self = this;
 
           this.Projects = this.sequelize.define('Project', {
             title: DataTypes.STRING
@@ -258,28 +258,28 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
           this.Projects.hasMany(this.Tasks);
           this.Tasks.belongsTo(this.Projects);
 
-          return this.Projects.sync({ force: true }).then(() => {
+          return this.Projects.sync({ force: true }).then(function() {
             return self.Tasks.sync({ force: true });
           });
         });
 
-        describe('#remove', () => {
+        describe('#remove', function() {
           it('with no errors', function() {
-            const self = this,
-              beforeProject = sinon.spy(),
-              afterProject = sinon.spy(),
-              beforeTask = sinon.spy(),
-              afterTask = sinon.spy();
+            var self = this
+            , beforeProject = sinon.spy()
+            , afterProject = sinon.spy()
+            , beforeTask = sinon.spy()
+            , afterTask = sinon.spy();
 
             this.Projects.beforeCreate(beforeProject);
             this.Projects.afterCreate(afterProject);
             this.Tasks.beforeUpdate(beforeTask);
             this.Tasks.afterUpdate(afterTask);
 
-            return this.Projects.create({title: 'New Project'}).then(project => {
-              return self.Tasks.create({title: 'New Task'}).then(task => {
-                return project.addTask(task).then(() => {
-                  return project.removeTask(task).then(() => {
+            return this.Projects.create({title: 'New Project'}).then(function(project) {
+              return self.Tasks.create({title: 'New Task'}).then(function(task) {
+                return project.addTask(task).then(function() {
+                  return project.removeTask(task).then(function() {
                     expect(beforeProject).to.have.been.called;
                     expect(afterProject).to.have.been.called;
                     expect(beforeTask).not.to.have.been.called;
@@ -291,23 +291,23 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
           });
 
           it('with errors', function() {
-            const self = this,
-              beforeProject = sinon.spy(),
-              afterProject = sinon.spy(),
-              beforeTask = sinon.spy(),
-              afterTask = sinon.spy();
+            var self = this
+            , beforeProject = sinon.spy()
+            , afterProject = sinon.spy()
+            , beforeTask = sinon.spy()
+            , afterTask = sinon.spy();
 
             this.Projects.beforeCreate(beforeProject);
             this.Projects.afterCreate(afterProject);
-            this.Tasks.beforeUpdate(() => {
+            this.Tasks.beforeUpdate(function(task, options) {
               beforeTask();
               throw new Error('Whoops!');
             });
             this.Tasks.afterUpdate(afterTask);
 
-            return this.Projects.create({title: 'New Project'}).then(project => {
-              return self.Tasks.create({title: 'New Task'}).then(task => {
-                return project.addTask(task).catch(err => {
+            return this.Projects.create({title: 'New Project'}).then(function(project) {
+              return self.Tasks.create({title: 'New Task'}).then(function(task) {
+                return project.addTask(task).catch(function(err) {
                   expect(err).to.be.instanceOf(Error);
                   expect(beforeProject).to.have.been.calledOnce;
                   expect(afterProject).to.have.been.calledOnce;
@@ -321,10 +321,10 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
       });
     });
 
-    describe('1:M', () => {
-      describe('cascade', () => {
+    describe('1:M', function() {
+      describe('cascade', function() {
         beforeEach(function() {
-          const self = this;
+          var self = this;
           this.Projects = this.sequelize.define('Project', {
             title: DataTypes.STRING
           });
@@ -336,28 +336,28 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
           this.Projects.hasMany(this.Tasks, {onDelete: 'cascade', hooks: true});
           this.Tasks.belongsTo(this.Projects, {hooks: true});
 
-          return this.Projects.sync({ force: true }).then(() => {
+          return this.Projects.sync({ force: true }).then(function() {
             return self.Tasks.sync({ force: true });
           });
         });
 
-        describe('#remove', () => {
+        describe('#remove', function() {
           it('with no errors', function() {
-            const self = this,
-              beforeProject = sinon.spy(),
-              afterProject = sinon.spy(),
-              beforeTask = sinon.spy(),
-              afterTask = sinon.spy();
+            var self = this
+            , beforeProject = sinon.spy()
+            , afterProject = sinon.spy()
+            , beforeTask = sinon.spy()
+            , afterTask = sinon.spy();
 
             this.Projects.beforeCreate(beforeProject);
             this.Projects.afterCreate(afterProject);
             this.Tasks.beforeDestroy(beforeTask);
             this.Tasks.afterDestroy(afterTask);
 
-            return this.Projects.create({title: 'New Project'}).then(project => {
-              return self.Tasks.create({title: 'New Task'}).then(task => {
-                return project.addTask(task).then(() => {
-                  return project.destroy().then(() => {
+            return this.Projects.create({title: 'New Project'}).then(function(project) {
+              return self.Tasks.create({title: 'New Task'}).then(function(task) {
+                return project.addTask(task).then(function() {
+                  return project.destroy().then(function() {
                     expect(beforeProject).to.have.been.calledOnce;
                     expect(afterProject).to.have.been.calledOnce;
                     expect(beforeTask).to.have.been.calledOnce;
@@ -369,36 +369,36 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
           });
 
           it('with errors', function() {
-            const self = this;
-            let beforeProject = false,
-              afterProject = false,
-              beforeTask = false,
-              afterTask = false;
+            var self = this
+            , beforeProject = false
+            , afterProject = false
+            , beforeTask = false
+            , afterTask = false;
 
-            this.Projects.beforeCreate(() => {
+            this.Projects.beforeCreate(function(project, options, fn) {
               beforeProject = true;
-              return Promise.resolve();
+              fn();
             });
 
-            this.Projects.afterCreate(() => {
+            this.Projects.afterCreate(function(project, options, fn) {
               afterProject = true;
-              return Promise.resolve();
+              fn();
             });
 
-            this.Tasks.beforeDestroy(() => {
+            this.Tasks.beforeDestroy(function(task, options, fn) {
               beforeTask = true;
-              return Promise.reject(new Error('Whoops!'));
+              fn(new Error('Whoops!'));
             });
 
-            this.Tasks.afterDestroy(() => {
+            this.Tasks.afterDestroy(function(task, options, fn) {
               afterTask = true;
-              return Promise.resolve();
+              fn();
             });
 
-            return this.Projects.create({title: 'New Project'}).then(project => {
-              return self.Tasks.create({title: 'New Task'}).then(task => {
-                return project.addTask(task).then(() => {
-                  return project.destroy().catch(err => {
+            return this.Projects.create({title: 'New Project'}).then(function(project) {
+              return self.Tasks.create({title: 'New Task'}).then(function(task) {
+                return project.addTask(task).then(function() {
+                  return project.destroy().catch(function(err) {
                     expect(err).to.be.instanceOf(Error);
                     expect(beforeProject).to.be.true;
                     expect(afterProject).to.be.true;
@@ -412,7 +412,7 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
         });
       });
 
-      describe('no cascade', () => {
+      describe('no cascade', function() {
         beforeEach(function() {
           this.Projects = this.sequelize.define('Project', {
             title: DataTypes.STRING
@@ -428,23 +428,23 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
           return this.sequelize.sync({ force: true });
         });
 
-        describe('#remove', () => {
+        describe('#remove', function() {
           it('with no errors', function() {
-            const self = this,
-              beforeProject = sinon.spy(),
-              afterProject = sinon.spy(),
-              beforeTask = sinon.spy(),
-              afterTask = sinon.spy();
+            var self = this
+            , beforeProject = sinon.spy()
+            , afterProject = sinon.spy()
+            , beforeTask = sinon.spy()
+            , afterTask = sinon.spy();
 
             this.Projects.beforeCreate(beforeProject);
             this.Projects.afterCreate(afterProject);
             this.Tasks.beforeUpdate(beforeTask);
             this.Tasks.afterUpdate(afterTask);
 
-            return this.Projects.create({title: 'New Project'}).then(project => {
-              return self.Tasks.create({title: 'New Task'}).then(task => {
-                return project.addTask(task).then(() => {
-                  return project.removeTask(task).then(() => {
+            return this.Projects.create({title: 'New Project'}).then(function(project) {
+              return self.Tasks.create({title: 'New Task'}).then(function(task) {
+                return project.addTask(task).then(function() {
+                  return project.removeTask(task).then(function() {
                     expect(beforeProject).to.have.been.called;
                     expect(afterProject).to.have.been.called;
                     expect(beforeTask).not.to.have.been.called;
@@ -456,35 +456,35 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
           });
 
           it('with errors', function() {
-            const self = this;
-            let beforeProject = false,
-              afterProject = false,
-              beforeTask = false,
-              afterTask = false;
+            var self = this
+            , beforeProject = false
+            , afterProject = false
+            , beforeTask = false
+            , afterTask = false;
 
-            this.Projects.beforeCreate(() => {
+            this.Projects.beforeCreate(function(project, options, fn) {
               beforeProject = true;
-              return Promise.resolve();
+              fn();
             });
 
-            this.Projects.afterCreate(() => {
+            this.Projects.afterCreate(function(project, options, fn) {
               afterProject = true;
-              return Promise.resolve();
+              fn();
             });
 
-            this.Tasks.beforeUpdate(() => {
+            this.Tasks.beforeUpdate(function(task, options, fn) {
               beforeTask = true;
-              return Promise.reject(new Error('Whoops!'));
+              fn(new Error('Whoops!'));
             });
 
-            this.Tasks.afterUpdate(() => {
+            this.Tasks.afterUpdate(function(task, options, fn) {
               afterTask = true;
-              return Promise.resolve();
+              fn();
             });
 
-            return this.Projects.create({title: 'New Project'}).then(project => {
-              return self.Tasks.create({title: 'New Task'}).then(task => {
-                return project.addTask(task).catch(err => {
+            return this.Projects.create({title: 'New Project'}).then(function(project) {
+              return self.Tasks.create({title: 'New Task'}).then(function(task) {
+                return project.addTask(task).catch(function(err) {
                   expect(err).to.be.instanceOf(Error);
                   expect(beforeProject).to.be.true;
                   expect(afterProject).to.be.true;
@@ -498,8 +498,8 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
       });
     });
 
-    describe('M:M', () => {
-      describe('cascade', () => {
+    describe('M:M', function() {
+      describe('cascade', function() {
         beforeEach(function() {
           this.Projects = this.sequelize.define('Project', {
             title: DataTypes.STRING
@@ -515,23 +515,23 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
           return this.sequelize.sync({ force: true });
         });
 
-        describe('#remove', () => {
+        describe('#remove', function() {
           it('with no errors', function() {
-            const self = this,
-              beforeProject = sinon.spy(),
-              afterProject = sinon.spy(),
-              beforeTask = sinon.spy(),
-              afterTask = sinon.spy();
+            var self = this
+            , beforeProject = sinon.spy()
+            , afterProject = sinon.spy()
+            , beforeTask = sinon.spy()
+            , afterTask = sinon.spy();
 
             this.Projects.beforeCreate(beforeProject);
             this.Projects.afterCreate(afterProject);
             this.Tasks.beforeDestroy(beforeTask);
             this.Tasks.afterDestroy(afterTask);
 
-            return this.Projects.create({title: 'New Project'}).then(project => {
-              return self.Tasks.create({title: 'New Task'}).then(task => {
-                return project.addTask(task).then(() => {
-                  return project.destroy().then(() => {
+            return this.Projects.create({title: 'New Project'}).then(function(project) {
+              return self.Tasks.create({title: 'New Task'}).then(function(task) {
+                return project.addTask(task).then(function() {
+                  return project.destroy().then(function() {
                     expect(beforeProject).to.have.been.calledOnce;
                     expect(afterProject).to.have.been.calledOnce;
                     // Since Sequelize does not cascade M:M, these should be false
@@ -544,36 +544,36 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
           });
 
           it('with errors', function() {
-            const self = this;
-            let beforeProject = false,
-              afterProject = false,
-              beforeTask = false,
-              afterTask = false;
+            var self = this
+            , beforeProject = false
+            , afterProject = false
+            , beforeTask = false
+            , afterTask = false;
 
-            this.Projects.beforeCreate(() => {
+            this.Projects.beforeCreate(function(project, options, fn) {
               beforeProject = true;
-              return Promise.resolve();
+              fn();
             });
 
-            this.Projects.afterCreate(() => {
+            this.Projects.afterCreate(function(project, options, fn) {
               afterProject = true;
-              return Promise.resolve();
+              fn();
             });
 
-            this.Tasks.beforeDestroy(() => {
+            this.Tasks.beforeDestroy(function(task, options, fn) {
               beforeTask = true;
-              return Promise.reject(new Error('Whoops!'));
+              fn(new Error('Whoops!'));
             });
 
-            this.Tasks.afterDestroy(() => {
+            this.Tasks.afterDestroy(function(task, options, fn) {
               afterTask = true;
-              return Promise.resolve();
+              fn();
             });
 
-            return this.Projects.create({title: 'New Project'}).then(project => {
-              return self.Tasks.create({title: 'New Task'}).then(task => {
-                return project.addTask(task).then(() => {
-                  return project.destroy().then(() => {
+            return this.Projects.create({title: 'New Project'}).then(function(project) {
+              return self.Tasks.create({title: 'New Task'}).then(function(task) {
+                return project.addTask(task).then(function() {
+                  return project.destroy().then(function() {
                     expect(beforeProject).to.be.true;
                     expect(afterProject).to.be.true;
                     expect(beforeTask).to.be.false;
@@ -586,7 +586,7 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
         });
       });
 
-      describe('no cascade', () => {
+      describe('no cascade', function() {
         beforeEach(function() {
           this.Projects = this.sequelize.define('Project', {
             title: DataTypes.STRING
@@ -602,23 +602,23 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
           return this.sequelize.sync({ force: true });
         });
 
-        describe('#remove', () => {
+        describe('#remove', function() {
           it('with no errors', function() {
-            const self = this,
-              beforeProject = sinon.spy(),
-              afterProject = sinon.spy(),
-              beforeTask = sinon.spy(),
-              afterTask = sinon.spy();
+            var self = this
+            , beforeProject = sinon.spy()
+            , afterProject = sinon.spy()
+            , beforeTask = sinon.spy()
+            , afterTask = sinon.spy();
 
             this.Projects.beforeCreate(beforeProject);
             this.Projects.afterCreate(afterProject);
             this.Tasks.beforeUpdate(beforeTask);
             this.Tasks.afterUpdate(afterTask);
 
-            return this.Projects.create({title: 'New Project'}).then(project => {
-              return self.Tasks.create({title: 'New Task'}).then(task => {
-                return project.addTask(task).then(() => {
-                  return project.removeTask(task).then(() => {
+            return this.Projects.create({title: 'New Project'}).then(function(project) {
+              return self.Tasks.create({title: 'New Task'}).then(function(task) {
+                return project.addTask(task).then(function() {
+                  return project.removeTask(task).then(function() {
                     expect(beforeProject).to.have.been.calledOnce;
                     expect(afterProject).to.have.been.calledOnce;
                     expect(beforeTask).not.to.have.been.called;
@@ -630,35 +630,35 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
           });
 
           it('with errors', function() {
-            const self = this;
-            let beforeProject = false,
-              afterProject = false,
-              beforeTask = false,
-              afterTask = false;
+            var self = this
+            , beforeProject = false
+            , afterProject = false
+            , beforeTask = false
+            , afterTask = false;
 
-            this.Projects.beforeCreate(() => {
+            this.Projects.beforeCreate(function(project, options, fn) {
               beforeProject = true;
-              return Promise.resolve();
+              fn();
             });
 
-            this.Projects.afterCreate(() => {
+            this.Projects.afterCreate(function(project, options, fn) {
               afterProject = true;
-              return Promise.resolve();
+              fn();
             });
 
-            this.Tasks.beforeUpdate(() => {
+            this.Tasks.beforeUpdate(function(task, options, fn) {
               beforeTask = true;
-              return Promise.reject(new Error('Whoops!'));
+              fn(new Error('Whoops!'));
             });
 
-            this.Tasks.afterUpdate(() => {
+            this.Tasks.afterUpdate(function(task, options, fn) {
               afterTask = true;
-              return Promise.resolve();
+              fn();
             });
 
-            return this.Projects.create({title: 'New Project'}).then(project => {
-              return self.Tasks.create({title: 'New Task'}).then(task => {
-                return project.addTask(task).then(() => {
+            return this.Projects.create({title: 'New Project'}).then(function(project) {
+              return self.Tasks.create({title: 'New Task'}).then(function(task) {
+                return project.addTask(task).then(function() {
                   expect(beforeProject).to.be.true;
                   expect(afterProject).to.be.true;
                   expect(beforeTask).to.be.false;
@@ -673,9 +673,9 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
 
     // NOTE: Reenable when FK constraints create table query is fixed when using hooks
     if (dialect !== 'mssql') {
-      describe('multiple 1:M', () => {
+      describe('multiple 1:M', function () {
 
-        describe('cascade', () => {
+        describe('cascade', function() {
           beforeEach(function() {
             this.Projects = this.sequelize.define('Project', {
               title: DataTypes.STRING
@@ -701,53 +701,53 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
             return this.sequelize.sync({force: true});
           });
 
-          describe('#remove', () => {
+          describe('#remove', function() {
             it('with no errors', function() {
-              let beforeProject = false,
-                afterProject = false,
-                beforeTask = false,
-                afterTask = false,
-                beforeMiniTask = false,
-                afterMiniTask = false;
+              var beforeProject = false
+              , afterProject = false
+              , beforeTask = false
+              , afterTask = false
+              , beforeMiniTask = false
+              , afterMiniTask = false;
 
-              this.Projects.beforeCreate(() => {
+              this.Projects.beforeCreate(function(project, options, fn) {
                 beforeProject = true;
-                return Promise.resolve();
+                fn();
               });
 
-              this.Projects.afterCreate(() => {
+              this.Projects.afterCreate(function(project, options, fn) {
                 afterProject = true;
-                return Promise.resolve();
+                fn();
               });
 
-              this.Tasks.beforeDestroy(() => {
+              this.Tasks.beforeDestroy(function(task, options, fn) {
                 beforeTask = true;
-                return Promise.resolve();
+                fn();
               });
 
-              this.Tasks.afterDestroy(() => {
+              this.Tasks.afterDestroy(function(task, options, fn) {
                 afterTask = true;
-                return Promise.resolve();
+                fn();
               });
 
-              this.MiniTasks.beforeDestroy(() => {
+              this.MiniTasks.beforeDestroy(function(minitask, options, fn) {
                 beforeMiniTask = true;
-                return Promise.resolve();
+                fn();
               });
 
-              this.MiniTasks.afterDestroy(() => {
+              this.MiniTasks.afterDestroy(function(minitask, options, fn) {
                 afterMiniTask = true;
-                return Promise.resolve();
+                fn();
               });
 
               return this.sequelize.Promise.all([
                 this.Projects.create({title: 'New Project'}),
                 this.MiniTasks.create({mini_title: 'New MiniTask'})
-              ]).bind(this).spread((project, minitask) => {
+              ]).bind(this).spread(function(project, minitask) {
                 return project.addMiniTask(minitask);
-              }).then(project => {
+              }).then(function(project) {
                 return project.destroy();
-              }).then(() => {
+              }).then(function() {
                 expect(beforeProject).to.be.true;
                 expect(afterProject).to.be.true;
                 expect(beforeTask).to.be.false;
@@ -759,51 +759,51 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
             });
 
             it('with errors', function() {
-              let beforeProject = false,
-                afterProject = false,
-                beforeTask = false,
-                afterTask = false,
-                beforeMiniTask = false,
-                afterMiniTask = false;
+              var beforeProject = false
+              , afterProject = false
+              , beforeTask = false
+              , afterTask = false
+              , beforeMiniTask = false
+              , afterMiniTask = false;
 
-              this.Projects.beforeCreate(() => {
+              this.Projects.beforeCreate(function(project, options, fn) {
                 beforeProject = true;
-                return Promise.resolve();
+                fn();
               });
 
-              this.Projects.afterCreate(() => {
+              this.Projects.afterCreate(function(project, options, fn) {
                 afterProject = true;
-                return Promise.resolve();
+                fn();
               });
 
-              this.Tasks.beforeDestroy(() => {
+              this.Tasks.beforeDestroy(function(task, options, fn) {
                 beforeTask = true;
-                return Promise.resolve();
+                fn();
               });
 
-              this.Tasks.afterDestroy(() => {
+              this.Tasks.afterDestroy(function(task, options, fn) {
                 afterTask = true;
-                return Promise.resolve();
+                fn();
               });
 
-              this.MiniTasks.beforeDestroy(() => {
+              this.MiniTasks.beforeDestroy(function(minitask, options, fn) {
                 beforeMiniTask = true;
-                return Promise.reject(new Error('Whoops!'));
+                fn(new Error('Whoops!'));
               });
 
-              this.MiniTasks.afterDestroy(() => {
+              this.MiniTasks.afterDestroy(function(minitask, options, fn) {
                 afterMiniTask = true;
-                return Promise.resolve();
+                fn();
               });
 
               return this.sequelize.Promise.all([
                 this.Projects.create({title: 'New Project'}),
                 this.MiniTasks.create({mini_title: 'New MiniTask'})
-              ]).bind(this).spread((project, minitask) => {
+              ]).bind(this).spread(function(project, minitask) {
                 return project.addMiniTask(minitask);
-              }).then(project => {
+              }).then(function(project) {
                 return project.destroy();
-              }).catch(() => {
+              }).catch(function() {
                 expect(beforeProject).to.be.true;
                 expect(afterProject).to.be.true;
                 expect(beforeTask).to.be.false;
@@ -816,8 +816,8 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
         });
       });
 
-      describe('multiple 1:M sequential hooks', () => {
-        describe('cascade', () => {
+      describe('multiple 1:M sequential hooks', function () {
+        describe('cascade', function() {
           beforeEach(function() {
             this.Projects = this.sequelize.define('Project', {
               title: DataTypes.STRING
@@ -843,43 +843,43 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
             return this.sequelize.sync({force: true});
           });
 
-          describe('#remove', () => {
+          describe('#remove', function() {
             it('with no errors', function() {
-              let beforeProject = false,
-                afterProject = false,
-                beforeTask = false,
-                afterTask = false,
-                beforeMiniTask = false,
-                afterMiniTask = false;
+              var beforeProject = false
+              , afterProject = false
+              , beforeTask = false
+              , afterTask = false
+              , beforeMiniTask = false
+              , afterMiniTask = false;
 
-              this.Projects.beforeCreate(() => {
+              this.Projects.beforeCreate(function(project, options, fn) {
                 beforeProject = true;
-                return Promise.resolve();
+                fn();
               });
 
-              this.Projects.afterCreate(() => {
+              this.Projects.afterCreate(function(project, options, fn) {
                 afterProject = true;
-                return Promise.resolve();
+                fn();
               });
 
-              this.Tasks.beforeDestroy(() => {
+              this.Tasks.beforeDestroy(function(task, options, fn) {
                 beforeTask = true;
-                return Promise.resolve();
+                fn();
               });
 
-              this.Tasks.afterDestroy(() => {
+              this.Tasks.afterDestroy(function(task, options, fn) {
                 afterTask = true;
-                return Promise.resolve();
+                fn();
               });
 
-              this.MiniTasks.beforeDestroy(() => {
+              this.MiniTasks.beforeDestroy(function(minitask, options, fn) {
                 beforeMiniTask = true;
-                return Promise.resolve();
+                fn();
               });
 
-              this.MiniTasks.afterDestroy(() => {
+              this.MiniTasks.afterDestroy(function(minitask, options, fn) {
                 afterMiniTask = true;
-                return Promise.resolve();
+                fn();
               });
 
               return this.sequelize.Promise.all([
@@ -891,9 +891,9 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
                   task.addMiniTask(minitask),
                   project.addTask(task)
                 ]).return(project);
-              }).then(project => {
+              }).then(function(project) {
                 return project.destroy();
-              }).then(() => {
+              }).then(function() {
                 expect(beforeProject).to.be.true;
                 expect(afterProject).to.be.true;
                 expect(beforeTask).to.be.true;
@@ -904,36 +904,36 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
             });
 
             it('with errors', function() {
-              let beforeProject = false,
-                afterProject = false,
-                beforeTask = false,
-                afterTask = false,
-                beforeMiniTask = false,
-                afterMiniTask = false;
-              const CustomErrorText = 'Whoops!';
+              var beforeProject = false
+              , afterProject = false
+              , beforeTask = false
+              , afterTask = false
+              , beforeMiniTask = false
+              , afterMiniTask = false
+              , CustomErrorText = 'Whoops!';
 
-              this.Projects.beforeCreate(() => {
+              this.Projects.beforeCreate(function() {
                 beforeProject = true;
               });
 
-              this.Projects.afterCreate(() => {
+              this.Projects.afterCreate(function() {
                 afterProject = true;
               });
 
-              this.Tasks.beforeDestroy(() => {
+              this.Tasks.beforeDestroy(function() {
                 beforeTask = true;
                 throw new Error(CustomErrorText);
               });
 
-              this.Tasks.afterDestroy(() => {
+              this.Tasks.afterDestroy(function() {
                 afterTask = true;
               });
 
-              this.MiniTasks.beforeDestroy(() => {
+              this.MiniTasks.beforeDestroy(function() {
                 beforeMiniTask = true;
               });
 
-              this.MiniTasks.afterDestroy(() => {
+              this.MiniTasks.afterDestroy(function() {
                 afterMiniTask = true;
               });
 
@@ -946,8 +946,8 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
                   task.addMiniTask(minitask),
                   project.addTask(task)
                 ]).return(project);
-              }).then(project => {
-                return expect(project.destroy()).to.eventually.be.rejectedWith(CustomErrorText).then(() => {
+              }).then(function(project) {
+                return expect(project.destroy()).to.eventually.be.rejectedWith(CustomErrorText).then(function () {
                   expect(beforeProject).to.be.true;
                   expect(afterProject).to.be.true;
                   expect(beforeTask).to.be.true;

@@ -1,24 +1,24 @@
 'use strict';
 
-const chai = require('chai'),
-  sinon = require('sinon'),
-  expect = chai.expect,
-  Support = require(__dirname + '/../support'),
-  dialect = Support.getTestDialect();
+/* jshint -W030 */
+var chai = require('chai')
+  , sinon = require('sinon')
+  , expect = chai.expect
+  , Support = require(__dirname + '/../support');
 
-describe(Support.getTestDialectTeaser('Sequelize'), () => {
-  describe('log', () => {
+describe(Support.getTestDialectTeaser('Sequelize'), function() {
+  describe('log', function() {
     beforeEach(function() {
       this.spy = sinon.spy(console, 'log');
     });
 
-    afterEach(() => {
+    afterEach(function() {
       console.log.restore();
     });
 
-    describe('with disabled logging', () => {
+    describe('with disabled logging', function() {
       beforeEach(function() {
-        this.sequelize = new Support.Sequelize('db', 'user', 'pw', { dialect, logging: false });
+        this.sequelize = new Support.Sequelize('db', 'user', 'pw', { logging: false });
       });
 
       it('does not call the log method of the logger', function() {
@@ -27,12 +27,12 @@ describe(Support.getTestDialectTeaser('Sequelize'), () => {
       });
     });
 
-    describe('with default logging options', () => {
+    describe('with default logging options', function() {
       beforeEach(function() {
-        this.sequelize = new Support.Sequelize('db', 'user', 'pw', { dialect });
+        this.sequelize = new Support.Sequelize('db', 'user', 'pw');
       });
 
-      describe('called with no arguments', () => {
+      describe('called with no arguments', function() {
         it('calls the log method', function() {
           this.sequelize.log();
           expect(this.spy.calledOnce).to.be.true;
@@ -44,14 +44,14 @@ describe(Support.getTestDialectTeaser('Sequelize'), () => {
         });
       });
 
-      describe('called with one argument', () => {
+      describe('called with one argument', function() {
         it('logs the passed string as info event', function() {
           this.sequelize.log('my message');
           expect(this.spy.withArgs('my message').calledOnce).to.be.true;
         });
       });
 
-      describe('called with more than two arguments', () => {
+      describe('called with more than two arguments', function() {
         it('passes the arguments to the logger', function() {
           this.sequelize.log('error', 'my message', 1, { a: 1 });
           expect(this.spy.withArgs('error', 'my message', 1, { a: 1 }).calledOnce).to.be.true;
@@ -59,25 +59,16 @@ describe(Support.getTestDialectTeaser('Sequelize'), () => {
       });
     });
 
-    describe('with a custom function for logging', () => {
+    describe('with a custom function for logging', function() {
       beforeEach(function() {
         this.spy = sinon.spy();
-        this.sequelize = new Support.Sequelize('db', 'user', 'pw', { dialect, logging: this.spy });
+        this.sequelize = new Support.Sequelize('db', 'user', 'pw', { logging: this.spy });
       });
 
       it('calls the custom logger method', function() {
         this.sequelize.log('om nom');
         expect(this.spy.calledOnce).to.be.true;
       });
-
-      it('calls the custom logger method with options', function() {
-        const message = 'om nom';
-        const timeTaken = 5;
-        const options = {correlationId: 'ABC001'};
-        this.sequelize.log(message, timeTaken, options);
-        expect(this.spy.withArgs(message, timeTaken, options).calledOnce).to.be.true;
-      });
-
     });
   });
 });

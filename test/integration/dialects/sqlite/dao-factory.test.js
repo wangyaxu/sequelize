@@ -1,15 +1,16 @@
 'use strict';
 
-const chai = require('chai'),
-  expect = chai.expect,
-  Support = require(__dirname + '/../../support'),
-  DataTypes = require(__dirname + '/../../../../lib/data-types'),
-  dialect = Support.getTestDialect(),
-  dbFile = __dirname + '/test.sqlite',
-  storages = [dbFile];
+/* jshint -W030 */
+var chai = require('chai')
+  , expect = chai.expect
+  , Support = require(__dirname + '/../../support')
+  , DataTypes = require(__dirname + '/../../../../lib/data-types')
+  , dialect = Support.getTestDialect()
+  , dbFile = __dirname + '/test.sqlite'
+  , storages = [dbFile];
 
 if (dialect === 'sqlite') {
-  describe('[SQLITE Specific] DAOFactory', () => {
+  describe('[SQLITE Specific] DAOFactory', function() {
     after(function() {
       this.sequelize.options.storage = ':memory:';
     });
@@ -24,24 +25,24 @@ if (dialect === 'sqlite') {
       return this.User.sync({ force: true });
     });
 
-    storages.forEach(storage => {
-      describe('with storage "' + storage + '"', () => {
-        after(() => {
+    storages.forEach(function(storage) {
+      describe('with storage "' + storage + '"', function() {
+        after(function() {
           if (storage === dbFile) {
             require('fs').writeFileSync(dbFile, '');
           }
         });
 
-        describe('create', () => {
+        describe('create', function() {
           it('creates a table entry', function() {
-            const self = this;
-            return this.User.create({ age: 21, name: 'John Wayne', bio: 'noot noot' }).then(user => {
+            var self = this;
+            return this.User.create({ age: 21, name: 'John Wayne', bio: 'noot noot' }).then(function(user) {
               expect(user.age).to.equal(21);
               expect(user.name).to.equal('John Wayne');
               expect(user.bio).to.equal('noot noot');
 
-              return self.User.findAll().then(users => {
-                const usernames = users.map(user => {
+              return self.User.findAll().then(function(users) {
+                var usernames = users.map(function(user) {
                   return user.name;
                 });
                 expect(usernames).to.contain('John Wayne');
@@ -50,75 +51,75 @@ if (dialect === 'sqlite') {
           });
 
           it('should allow the creation of an object with options as attribute', function() {
-            const Person = this.sequelize.define('Person', {
+            var Person = this.sequelize.define('Person', {
               name: DataTypes.STRING,
               options: DataTypes.TEXT
             });
 
-            return Person.sync({ force: true }).then(() => {
-              const options = JSON.stringify({ foo: 'bar', bar: 'foo' });
+            return Person.sync({ force: true }).then(function() {
+              var options = JSON.stringify({ foo: 'bar', bar: 'foo' });
 
               return Person.create({
                 name: 'John Doe',
-                options
-              }).then(people => {
+                options: options
+              }).then(function(people) {
                 expect(people.options).to.deep.equal(options);
               });
             });
           });
 
           it('should allow the creation of an object with a boolean (true) as attribute', function() {
-            const Person = this.sequelize.define('Person', {
+            var Person = this.sequelize.define('Person', {
               name: DataTypes.STRING,
               has_swag: DataTypes.BOOLEAN
             });
 
-            return Person.sync({ force: true }).then(() => {
+            return Person.sync({ force: true }).then(function() {
               return Person.create({
                 name: 'John Doe',
                 has_swag: true
-              }).then(people => {
+              }).then(function(people) {
                 expect(people.has_swag).to.be.ok;
               });
             });
           });
 
           it('should allow the creation of an object with a boolean (false) as attribute', function() {
-            const Person = this.sequelize.define('Person', {
+            var Person = this.sequelize.define('Person', {
               name: DataTypes.STRING,
               has_swag: DataTypes.BOOLEAN
             });
 
-            return Person.sync({ force: true }).then(() => {
+            return Person.sync({ force: true }).then(function() {
               return Person.create({
                 name: 'John Doe',
                 has_swag: false
-              }).then(people => {
+              }).then(function(people) {
                 expect(people.has_swag).to.not.be.ok;
               });
             });
           });
         });
 
-        describe('.find', () => {
+        describe('.find', function() {
           beforeEach(function() {
             return this.User.create({name: 'user', bio: 'footbar'});
           });
 
           it('finds normal lookups', function() {
-            return this.User.find({ where: { name: 'user' } }).then(user => {
+            return this.User.find({ where: { name: 'user' } }).then(function(user) {
               expect(user.name).to.equal('user');
             });
           });
 
           it.skip('should make aliased attributes available', function() {
-            return this.User.find({ where: { name: 'user' }, attributes: ['id', ['name', 'username']] }).then(user => {
+            return this.User.find({ where: { name: 'user' }, attributes: ['id', ['name', 'username']] }).then(function(user) {
               expect(user.username).to.equal('user');
             });
           });
         });
 
-        describe('.all', () => {
+        describe('.all', function() {
           beforeEach(function() {
             return this.User.bulkCreate([
               {name: 'user', bio: 'foobar'},
@@ -127,40 +128,40 @@ if (dialect === 'sqlite') {
           });
 
           it('should return all users', function() {
-            return this.User.findAll().then(users => {
+            return this.User.findAll().then(function(users) {
               expect(users).to.have.length(2);
             });
           });
         });
 
-        describe('.min', () => {
+        describe('.min', function() {
           it('should return the min value', function() {
-            const self = this,
-              users = [];
+            var self = this
+              , users = [];
 
-            for (let i = 2; i < 5; i++) {
+            for (var i = 2; i < 5; i++) {
               users[users.length] = {age: i};
             }
 
-            return this.User.bulkCreate(users).then(() => {
-              return self.User.min('age').then(min => {
+            return this.User.bulkCreate(users).then(function() {
+              return self.User.min('age').then(function(min) {
                 expect(min).to.equal(2);
               });
             });
           });
         });
 
-        describe('.max', () => {
+        describe('.max', function() {
           it('should return the max value', function() {
-            const self = this,
-              users = [];
+            var self = this
+              , users = [];
 
-            for (let i = 2; i <= 5; i++) {
+            for (var i = 2; i <= 5; i++) {
               users[users.length] = {age: i};
             }
 
-            return this.User.bulkCreate(users).then(() => {
-              return self.User.max('age').then(min => {
+            return this.User.bulkCreate(users).then(function() {
+              return self.User.max('age').then(function(min) {
                 expect(min).to.equal(5);
               });
             });

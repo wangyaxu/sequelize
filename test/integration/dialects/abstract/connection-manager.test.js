@@ -1,166 +1,150 @@
 'use strict';
 
-const chai = require('chai'),
-  expect = chai.expect,
-  Support = require(__dirname + '/../../support'),
-  sinon = require('sinon'),
-  Config = require(__dirname + '/../../../config/config'),
-  ConnectionManager = require(__dirname + '/../../../../lib/dialects/abstract/connection-manager'),
-  Pooling = require('generic-pool'),
-  _ = require('lodash'),
-  Promise = require(__dirname + '/../../../../lib/promise');
+/* jshint -W030 */
+var chai = require('chai')
+  , expect = chai.expect
+  , Support = require(__dirname + '/../../support')
+  , sinon = require('sinon')
+  , Config = require(__dirname + '/../../../config/config')
+  , ConnectionManager = require(__dirname + '/../../../../lib/dialects/abstract/connection-manager')
+  , Pooling = require('generic-pool')
+  , _ = require('lodash')
+  , Promise = require(__dirname + '/../../../../lib/promise');
 
-const baseConf = Config[Support.getTestDialect()];
-const poolEntry = {
+var baseConf = Config[Support.getTestDialect()];
+var poolEntry = {
   host: baseConf.host,
   port: baseConf.port,
   pool: {}
 };
 
-describe('Connection Manager', () => {
-  let sandbox;
+describe('Connction Manager', function() {
 
-  beforeEach(() => {
+  var sandbox;
+
+  beforeEach(function(){
     sandbox = sinon.sandbox.create();
   });
 
-  afterEach(() => {
+  afterEach(function(){
     sandbox.restore();
   });
 
-  it('should initialize a single pool without replication', () => {
-    const options = {
+  it('should initialize a single pool without replication', function() {
+    var options = {
       replication: null
     };
-    const sequelize = Support.createSequelizeInstance(options);
-    const connectionManager = new ConnectionManager(Support.getTestDialect(), sequelize);
+    var sequelize = Support.createSequelizeInstance(options);
+    var connectionManager = new ConnectionManager(Support.getTestDialect(), sequelize);
 
-    const poolSpy = sandbox.spy(Pooling, 'createPool');
+    var poolSpy = sandbox.spy(Pooling, 'Pool');
     connectionManager.initPools();
     expect(poolSpy.calledOnce).to.be.true;
   });
 
-  it('should initialize a multiple pools with replication', () => {
-    const options = {
+  it('should initialize a multiple pools with replication', function() {
+    var options = {
       replication: {
         write: _.clone(poolEntry),
         read: [_.clone(poolEntry), _.clone(poolEntry)]
       }
     };
-    const sequelize = Support.createSequelizeInstance(options);
-    const connectionManager = new ConnectionManager(Support.getTestDialect(), sequelize);
+    var sequelize = Support.createSequelizeInstance(options);
+    var connectionManager = new ConnectionManager(Support.getTestDialect(), sequelize);
 
-    const poolSpy = sandbox.spy(Pooling, 'createPool');
+    var poolSpy = sandbox.spy(Pooling, 'Pool');
     connectionManager.initPools();
     expect(poolSpy.calledTwice).to.be.true;
   });
 
-  it('should round robin calls to the read pool', () => {
+  it('should round robin calls to the read pool', function() {
     if (Support.getTestDialect() === 'sqlite') {
       return;
     }
 
-    const slave1 = _.clone(poolEntry);
-    const slave2 = _.clone(poolEntry);
+    var slave1 = _.clone(poolEntry);
+    var slave2 = _.clone(poolEntry);
     slave1.host = 'slave1';
     slave2.host = 'slave2';
 
-    const options = {
+    var options = {
       replication: {
         write: _.clone(poolEntry),
         read: [slave1, slave2]
       }
     };
-    const sequelize = Support.createSequelizeInstance(options);
-    const connectionManager = new ConnectionManager(Support.getTestDialect(), sequelize);
+    var sequelize = Support.createSequelizeInstance(options);
+    var connectionManager = new ConnectionManager(Support.getTestDialect(), sequelize);
 
-    const resolvedPromise = new Promise(resolve => {
+    var resolvedPromise = new Promise(function(resolve) {
       resolve({
         queryType: 'read'
       });
     });
 
-    const connectStub = sandbox.stub(connectionManager, '_connect').returns(resolvedPromise);
-    sandbox.stub(connectionManager, '_disconnect').returns(resolvedPromise);
+    var connectStub = sandbox.stub(connectionManager, '$connect').returns(resolvedPromise);
+    sandbox.stub(connectionManager, '$disconnect').returns(resolvedPromise);
     sandbox.stub(sequelize, 'databaseVersion').returns(resolvedPromise);
     connectionManager.initPools();
 
-    const queryOptions = {
+    var queryOptions = {
       priority: 0,
       type: 'SELECT',
       useMaster: false
     };
 
-    const _getConnection = _.bind(connectionManager.getConnection, connectionManager, queryOptions);
+    var _getConnection = _.bind(connectionManager.getConnection, connectionManager, queryOptions);
 
     return _getConnection()
       .then(_getConnection)
       .then(_getConnection)
-      .then(() => {
+      .then(function checkPoolHosts() {
         chai.expect(connectStub.callCount).to.equal(4);
 
         // First call is the get connection for DB versions - ignore
-        const calls = connectStub.getCalls();
+        var calls = connectStub.getCalls();
         chai.expect(calls[1].args[0].host).to.eql('slave1');
         chai.expect(calls[2].args[0].host).to.eql('slave2');
         chai.expect(calls[3].args[0].host).to.eql('slave1');
       });
   });
 
-  it('should allow forced reads from the write pool', () => {
-    const master = _.clone(poolEntry);
+  it('should allow forced reads from the write pool', function() {
+    var master = _.clone(poolEntry);
     master.host = 'the-boss';
 
-    const options = {
+    var options = {
       replication: {
         write: master,
         read: [_.clone(poolEntry)]
       }
     };
-    const sequelize = Support.createSequelizeInstance(options);
-    const connectionManager = new ConnectionManager(Support.getTestDialect(), sequelize);
+    var sequelize = Support.createSequelizeInstance(options);
+    var connectionManager = new ConnectionManager(Support.getTestDialect(), sequelize);
 
-    const resolvedPromise = new Promise(resolve => {
+    var resolvedPromise = new Promise(function(resolve) {
       resolve({
         queryType: 'read'
       });
     });
 
-    const connectStub = sandbox.stub(connectionManager, '_connect').returns(resolvedPromise);
-    sandbox.stub(connectionManager, '_disconnect').returns(resolvedPromise);
+    var connectStub = sandbox.stub(connectionManager, '$connect').returns(resolvedPromise);
+    sandbox.stub(connectionManager, '$disconnect').returns(resolvedPromise);
     sandbox.stub(sequelize, 'databaseVersion').returns(resolvedPromise);
     connectionManager.initPools();
 
-    const queryOptions = {
+    var queryOptions = {
       priority: 0,
       type: 'SELECT',
       useMaster: true
     };
 
     return connectionManager.getConnection(queryOptions)
-      .then(() => {
+      .then(function checkPoolHosts() {
         chai.expect(connectStub).to.have.been.calledTwice; // Once to get DB version, and once to actually get the connection.
-        const calls = connectStub.getCalls();
+        var calls = connectStub.getCalls();
         chai.expect(calls[1].args[0].host).to.eql('the-boss');
       });
-  });
-
-  it('should clear the pool after draining it', () => {
-    const options = {
-      replication: null
-    };
-    const sequelize = Support.createSequelizeInstance(options);
-    const connectionManager = new ConnectionManager(Support.getTestDialect(), sequelize);
-
-    connectionManager.initPools();
-
-    const poolDrainSpy = sandbox.spy(connectionManager.pool, 'drain');
-    const poolClearSpy = sandbox.spy(connectionManager.pool, 'clear');
-
-    return connectionManager.close().then(() => {
-      expect(poolDrainSpy.calledOnce).to.be.true;
-      expect(poolClearSpy.calledOnce).to.be.true;
-    });
   });
 
 });

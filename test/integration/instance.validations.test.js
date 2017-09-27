@@ -1,15 +1,17 @@
 'use strict';
 
-const chai = require('chai'),
-  expect = chai.expect,
-  Sequelize = require(__dirname + '/../../index'),
-  Support = require(__dirname + '/support'),
-  config = require(__dirname + '/../config/config');
+/* jshint -W030 */
+/* jshint -W110 */
+var chai = require('chai')
+  , expect = chai.expect
+  , Sequelize = require(__dirname + '/../../index')
+  , Support = require(__dirname + '/support')
+  , config = require(__dirname + '/../config/config');
 
-describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
-  describe('#update', () => {
+describe(Support.getTestDialectTeaser('InstanceValidator'), function() {
+  describe('#update', function() {
     it('should allow us to update specific columns without tripping the validations', function() {
-      const User = this.sequelize.define('model', {
+      var User = this.sequelize.define('model', {
         username: Sequelize.STRING,
         email: {
           type: Sequelize.STRING,
@@ -22,12 +24,12 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
         }
       });
 
-      return User.sync({ force: true }).then(() => {
-        return User.create({ username: 'bob', email: 'hello@world.com' }).then(user => {
+      return User.sync({ force: true }).then(function() {
+        return User.create({ username: 'bob', email: 'hello@world.com' }).then(function(user) {
           return User
             .update({ username: 'toni' }, { where: {id: user.id }})
-            .then(() => {
-              return User.findById(1).then(user => {
+            .then(function() {
+              return User.findById(1).then(function(user) {
                 expect(user.username).to.equal('toni');
               });
             });
@@ -36,7 +38,7 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
     });
 
     it('should be able to emit an error upon updating when a validation has failed from an instance', function() {
-      const Model = this.sequelize.define('model', {
+      var Model = this.sequelize.define('model', {
         name: {
           type: Sequelize.STRING,
           allowNull: false,
@@ -46,18 +48,18 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
         }
       });
 
-      return Model.sync({ force: true }).then(() => {
-        return Model.create({name: 'World'}).then(model => {
-          return model.updateAttributes({name: ''}).catch(err => {
+      return Model.sync({ force: true }).then(function() {
+        return Model.create({name: 'World'}).then(function(model) {
+          return model.updateAttributes({name: ''}).catch(function(err) {
             expect(err).to.be.an.instanceOf(Error);
-            expect(err.get('name')[0].message).to.equal('Validation notEmpty on name failed');
+            expect(err.get('name')[0].message).to.equal('Validation notEmpty failed');
           });
         });
       });
     });
 
     it('should be able to emit an error upon updating when a validation has failed from the factory', function() {
-      const Model = this.sequelize.define('model', {
+      var Model = this.sequelize.define('model', {
         name: {
           type: Sequelize.STRING,
           allowNull: false,
@@ -67,34 +69,34 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
         }
       });
 
-      return Model.sync({ force: true }).then(() => {
-        return Model.create({name: 'World'}).then(() => {
-          return Model.update({name: ''}, {where: {id: 1}}).catch(err => {
+      return Model.sync({ force: true }).then(function() {
+        return Model.create({name: 'World'}).then(function() {
+          return Model.update({name: ''}, {where: {id: 1}}).catch(function(err) {
             expect(err).to.be.an.instanceOf(Error);
-            expect(err.get('name')[0].message).to.equal('Validation notEmpty on name failed');
+            expect(err.get('name')[0].message).to.equal('Validation notEmpty failed');
           });
         });
       });
     });
 
     it('should enforce a unique constraint', function() {
-      const Model = this.sequelize.define('model', {
+      var Model = this.sequelize.define('model', {
         uniqueName: { type: Sequelize.STRING, unique: true }
       });
-      const records = [
+      var records = [
         { uniqueName: 'unique name one' },
         { uniqueName: 'unique name two' }
       ];
       return Model.sync({ force: true })
-        .then(() => {
+        .then(function() {
           return Model.create(records[0]);
-        }).then(instance => {
+        }).then(function(instance) {
           expect(instance).to.be.ok;
           return Model.create(records[1]);
-        }).then(instance => {
+        }).then(function(instance) {
           expect(instance).to.be.ok;
           return expect(Model.update(records[0], { where: { id: instance.id } })).to.be.rejected;
-        }).then(err => {
+        }).then(function(err) {
           expect(err).to.be.an.instanceOf(Error);
           expect(err.errors).to.have.length(1);
           expect(err.errors[0].path).to.include('uniqueName');
@@ -103,26 +105,26 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
     });
 
     it('should allow a custom unique constraint error message', function() {
-      const Model = this.sequelize.define('model', {
+      var Model = this.sequelize.define('model', {
         uniqueName: {
           type: Sequelize.STRING,
           unique: { msg: 'custom unique error message' }
         }
       });
-      const records = [
+      var records = [
         { uniqueName: 'unique name one' },
         { uniqueName: 'unique name two' }
       ];
       return Model.sync({ force: true })
-        .then(() => {
+        .then(function() {
           return Model.create(records[0]);
-        }).then(instance => {
+        }).then(function(instance) {
           expect(instance).to.be.ok;
           return Model.create(records[1]);
-        }).then(instance => {
+        }).then(function(instance) {
           expect(instance).to.be.ok;
           return expect(Model.update(records[0], { where: { id: instance.id } })).to.be.rejected;
-        }).then(err => {
+        }).then(function(err) {
           expect(err).to.be.an.instanceOf(Error);
           expect(err.errors).to.have.length(1);
           expect(err.errors[0].path).to.include('uniqueName');
@@ -131,7 +133,7 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
     });
 
     it('should handle multiple unique messages correctly', function() {
-      const Model = this.sequelize.define('model', {
+      var Model = this.sequelize.define('model', {
         uniqueName1: {
           type: Sequelize.STRING,
           unique: { msg: 'custom unique error message 1' }
@@ -139,27 +141,27 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
         uniqueName2: {
           type: Sequelize.STRING,
           unique: { msg: 'custom unique error message 2' }
-        }
+        },
       });
-      const records = [
+      var records = [
         { uniqueName1: 'unique name one', uniqueName2: 'unique name one' },
         { uniqueName1: 'unique name one', uniqueName2: 'this is ok' },
-        { uniqueName1: 'this is ok', uniqueName2: 'unique name one' }
+        { uniqueName1: 'this is ok', uniqueName2: 'unique name one' },
       ];
       return Model.sync({ force: true })
-        .then(() => {
+        .then(function() {
           return Model.create(records[0]);
-        }).then(instance => {
+        }).then(function(instance) {
           expect(instance).to.be.ok;
           return expect(Model.create(records[1])).to.be.rejected;
-        }).then(err => {
+        }).then(function(err) {
           expect(err).to.be.an.instanceOf(Error);
           expect(err.errors).to.have.length(1);
           expect(err.errors[0].path).to.include('uniqueName1');
           expect(err.errors[0].message).to.equal('custom unique error message 1');
 
           return expect(Model.create(records[2])).to.be.rejected;
-        }).then(err => {
+        }).then(function(err) {
           expect(err).to.be.an.instanceOf(Error);
           expect(err.errors).to.have.length(1);
           expect(err.errors[0].path).to.include('uniqueName2');
@@ -168,12 +170,12 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
     });
   });
 
-  describe('#create', () => {
-    describe('generic', () => {
+  describe('#create', function() {
+    describe('generic', function() {
       beforeEach(function() {
-        const self = this;
+        var self = this;
 
-        const Project = this.sequelize.define('Project', {
+        var Project = this.sequelize.define('Project', {
           name: {
             type: Sequelize.STRING,
             allowNull: false,
@@ -184,32 +186,32 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
           }
         });
 
-        const Task = this.sequelize.define('Task', {
+        var Task = this.sequelize.define('Task', {
           something: Sequelize.INTEGER
         });
 
         Project.hasOne(Task);
         Task.belongsTo(Project);
 
-        return this.sequelize.sync({ force: true }).then(() => {
+        return this.sequelize.sync({ force: true }).then(function() {
           self.Project = Project;
           self.Task = Task;
         });
       });
 
       it('correctly throws an error using create method ', function() {
-        return this.Project.create({name: 'nope'}).catch(err => {
+        return this.Project.create({name: 'nope'}).catch(function(err) {
           expect(err).to.have.ownProperty('name');
         });
       });
 
       it('correctly validates using create method ', function() {
-        const self = this;
-        return this.Project.create({}).then(project => {
-          return self.Task.create({something: 1}).then(task => {
-            return project.setTask(task).then(task => {
+        var self = this;
+        return this.Project.create({}).then(function(project) {
+          return self.Task.create({something: 1}).then(function(task) {
+            return project.setTask(task).then(function(task) {
               expect(task.ProjectId).to.not.be.null;
-              return task.setProject(project).then(project => {
+              return task.setProject(project).then(function(project) {
                 expect(project.ProjectId).to.not.be.null;
               });
             });
@@ -218,9 +220,9 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
       });
     });
 
-    describe('explicitly validating primary/auto incremented columns', () => {
+    describe('explicitly validating primary/auto incremented columns', function() {
       it('should emit an error when we try to enter in a string for the id key without validation arguments', function() {
-        const User = this.sequelize.define('UserId', {
+        var User = this.sequelize.define('UserId', {
           id: {
             type: Sequelize.INTEGER,
             autoIncrement: true,
@@ -231,16 +233,16 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
           }
         });
 
-        return User.sync({ force: true }).then(() => {
-          return User.create({id: 'helloworld'}).catch(err => {
+        return User.sync({ force: true }).then(function() {
+          return User.create({id: 'helloworld'}).catch(function(err) {
             expect(err).to.be.an.instanceOf(Error);
-            expect(err.get('id')[0].message).to.equal('Validation isInt on id failed');
+            expect(err.get('id')[0].message).to.equal('Validation isInt failed');
           });
         });
       });
 
       it('should emit an error when we try to enter in a string for an auto increment key (not named id)', function() {
-        const User = this.sequelize.define('UserId', {
+        var User = this.sequelize.define('UserId', {
           username: {
             type: Sequelize.INTEGER,
             autoIncrement: true,
@@ -251,15 +253,15 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
           }
         });
 
-        return User.sync({ force: true }).then(() => {
-          return User.create({username: 'helloworldhelloworld'}).catch(err => {
+        return User.sync({ force: true }).then(function() {
+          return User.create({username: 'helloworldhelloworld'}).catch(function(err) {
             expect(err).to.be.an.instanceOf(Error);
             expect(err.get('username')[0].message).to.equal('Username must be an integer!');
           });
         });
       });
 
-      describe('primaryKey with the name as id with arguments for it\'s validatio', () => {
+      describe('primaryKey with the name as id with arguments for it\'s validatio', function() {
         beforeEach(function() {
           this.User = this.sequelize.define('UserId', {
             id: {
@@ -276,34 +278,34 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
         });
 
         it('should emit an error when we try to enter in a string for the id key with validation arguments', function() {
-          return this.User.create({id: 'helloworld'}).catch(err => {
+          return this.User.create({id: 'helloworld'}).catch(function(err) {
             expect(err).to.be.an.instanceOf(Error);
             expect(err.get('id')[0].message).to.equal('ID must be an integer!');
           });
         });
 
         it('should emit an error when we try to enter in a string for an auto increment key through .build().validate()', function() {
-          const user = this.User.build({id: 'helloworld'});
+          var user = this.User.build({id: 'helloworld'});
 
-          return expect(user.validate()).to.be.rejected.then(err => {
+          return user.validate().then(function(err) {
+            expect(err).to.be.an.instanceOf(Error);
             expect(err.get('id')[0].message).to.equal('ID must be an integer!');
           });
         });
 
         it('should emit an error when we try to .save()', function() {
-          const user = this.User.build({id: 'helloworld'});
-          return user.save().catch(err => {
+          var user = this.User.build({id: 'helloworld'});
+          return user.save().catch(function(err) {
             expect(err).to.be.an.instanceOf(Error);
             expect(err.get('id')[0].message).to.equal('ID must be an integer!');
           });
         });
       });
     });
-    
-    describe('pass all paths when validating', () => {
+    describe('Pass all paths when validating', function() {
       beforeEach(function() {
-        const self = this;
-        const Project = this.sequelize.define('Project', {
+        var self = this;
+        var Project = this.sequelize.define('Project', {
           name: {
             type: Sequelize.STRING,
             allowNull: false,
@@ -322,15 +324,15 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
 
         });
 
-        const Task = this.sequelize.define('Task', {
+        var Task = this.sequelize.define('Task', {
           something: Sequelize.INTEGER
         });
 
         Project.hasOne(Task);
         Task.belongsTo(Project);
 
-        return Project.sync({ force: true }).then(() => {
-          return Task.sync({ force: true }).then(() => {
+        return Project.sync({ force: true }).then(function() {
+          return Task.sync({ force: true }).then(function() {
             self.Project = Project;
             self.Task = Task;
           });
@@ -338,57 +340,21 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
       });
 
       it('produce 3 errors', function() {
-        return this.Project.create({}).catch(err => {
+        return this.Project.create({}).catch(function(err) {
           expect(err).to.be.an.instanceOf(Error);
           delete err.stack; // longStackTraces
-          expect(err.errors).to.have.length(3);
-        });
-      });
-    });
-    
-    describe('not null schema validation', () => {
-      beforeEach(function() {
-        const Project = this.sequelize.define('Project', {
-          name: {
-            type: Sequelize.STRING,
-            allowNull: false,
-            validate: {
-              isIn: [['unknown', 'hello', 'test']] // important to be
-            }
-          }
-        });
-
-        return this.sequelize.sync({ force: true }).then(() => {
-          this.Project = Project;
-        });
-      });
-
-      it('correctly throws an error using create method ', function() {
-        return this.Project.create({})
-          .then(() => {
-            throw new Error('Validation must be failed');
-          }, () => {
-            // fail is ok
-          });
-      });
-
-      it('correctly throws an error using create method with default generated messages', function() {
-        return this.Project.create({}).catch(err => {
-          expect(err).to.have.property('name', 'SequelizeValidationError');
-          expect(err.message).equal('notNull Violation: name cannot be null');
-          expect(err.errors).to.be.an('array').and.have.length(1);
-          expect(err.errors[0]).to.have.property('message', 'name cannot be null');
+          expect(Object.keys(err)).to.have.length(3);
         });
       });
     });
   });
 
   it('correctly validates using custom validation methods', function() {
-    const User = this.sequelize.define('User' + config.rand(), {
+    var User = this.sequelize.define('User' + config.rand(), {
       name: {
         type: Sequelize.STRING,
         validate: {
-          customFn(val, next) {
+          customFn: function(val, next) {
             if (val !== '2') {
               next("name should equal '2'");
             } else {
@@ -399,26 +365,28 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
       }
     });
 
-    const failingUser = User.build({ name: '3' });
+    var failingUser = User.build({ name: '3' });
 
-    return expect(failingUser.validate()).to.be.rejected.then(error => {
+    return failingUser.validate().then(function(error) {
       expect(error).to.be.an.instanceOf(Error);
       expect(error.get('name')[0].message).to.equal("name should equal '2'");
 
-      const successfulUser = User.build({ name: '2' });
-      return expect(successfulUser.validate()).not.to.be.rejected;
+      var successfulUser = User.build({ name: '2' });
+      return successfulUser.validate().then(function(err) {
+        expect(err).to.be.null;
+      });
     });
   });
 
   it('supports promises with custom validation methods', function() {
-    const self = this,
-      User = this.sequelize.define('User' + config.rand(), {
+    var self = this
+      , User = this.sequelize.define('User' + config.rand(), {
         name: {
           type: Sequelize.STRING,
           validate: {
-            customFn(val) {
+            customFn: function(val) {
               return User.findAll()
-                .then(() => {
+                .then(function() {
                   if (val === 'error') {
                     throw new Error('Invalid username');
                   }
@@ -428,18 +396,20 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
         }
       });
 
-    return User.sync().then(() => {
-      return expect(User.build({ name: 'error' }).validate()).to.be.rejected.then(error => {
-        expect(error).to.be.instanceof(self.sequelize.ValidationError);
+    return User.sync().then(function() {
+      return User.build({ name: 'error' }).validate().then(function(error)  {
+        expect(error).to.be.an.instanceOf(self.sequelize.ValidationError);
         expect(error.get('name')[0].message).to.equal('Invalid username');
 
-        return expect(User.build({ name: 'no error' }).validate()).not.to.be.rejected;
+        return User.build({ name: 'no error' }).validate().then(function(errors) {
+          expect(errors).to.be.null;
+        });
       });
     });
   });
 
   it('skips other validations if allowNull is true and the value is null', function() {
-    const User = this.sequelize.define('User' + config.rand(), {
+    var User = this.sequelize.define('User' + config.rand(), {
       age: {
         type: Sequelize.INTEGER,
         allowNull: true,
@@ -449,17 +419,24 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
       }
     });
 
-    return expect(User
+    return User
       .build({ age: -1 })
-      .validate())
-      .to.be.rejected
-      .then(error => {
+      .validate()
+      .then(function(error) {
+        expect(error).not.to.be.null;
+        expect(error).to.be.an.instanceOf(Error);
         expect(error.get('age')[0].message).to.equal('must be positive');
+
+        // TODO: This does not test anything
+        // Check what the original intention was
+        return User.build({ age: null }).validate().then(function() {
+          return User.build({ age: 1 }).validate();
+        });
       });
   });
 
   it('validates a model with custom model-wide validation methods', function() {
-    const Foo = this.sequelize.define('Foo' + config.rand(), {
+    var Foo = this.sequelize.define('Foo' + config.rand(), {
       field1: {
         type: Sequelize.INTEGER,
         allowNull: true
@@ -470,84 +447,93 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
       }
     }, {
       validate: {
-        xnor() {
-          if (this.field1 === null === (this.field2 === null)) {
+        xnor: function() {
+          if ((this.field1 === null) === (this.field2 === null)) {
             throw new Error('xnor failed');
           }
         }
       }
     });
 
-    return expect(Foo
+    return Foo
       .build({ field1: null, field2: null })
-      .validate())
-      .to.be.rejected
-      .then(error => {
+      .validate()
+      .then(function(error) {
+        expect(error).not.to.be.null;
+        expect(error).to.be.an.instanceOf(Error);
         expect(error.get('xnor')[0].message).to.equal('xnor failed');
-
-        return expect(Foo
+        return Foo
           .build({ field1: 33, field2: null })
-          .validate())
-          .not.to.be.rejected;
+          .validate()
+          .then(function(errors) {
+            expect(errors).not.exist;
+          });
       });
   });
 
   it('validates model with a validator whose arg is an Array successfully twice in a row', function() {
-    const Foo = this.sequelize.define('Foo' + config.rand(), {
-        bar: {
-          type: Sequelize.STRING,
-          validate: {
-            isIn: [['a', 'b']]
-          }
+    var Foo = this.sequelize.define('Foo' + config.rand(), {
+      bar: {
+        type: Sequelize.STRING,
+        validate: {
+          isIn: [['a', 'b']]
         }
-      }),
-      foo = Foo.build({bar: 'a'});
-    return expect(foo.validate()).not.to.be.rejected.then(() => {
-      return expect(foo.validate()).not.to.be.rejected;
+      }
+    }), foo;
+
+    foo = Foo.build({bar: 'a'});
+    return foo.validate().then(function(errors) {
+      expect(errors).not.to.exist;
+      return foo.validate().then(function(errors) {
+        expect(errors).not.to.exist;
+      });
     });
   });
 
   it('validates enums', function() {
-    const values = ['value1', 'value2'];
+    var values = ['value1', 'value2'];
 
-    const Bar = this.sequelize.define('Bar' + config.rand(), {
+    var Bar = this.sequelize.define('Bar' + config.rand(), {
       field: {
         type: Sequelize.ENUM,
-        values,
+        values: values,
         validate: {
           isIn: [values]
         }
       }
     });
 
-    const failingBar = Bar.build({ field: 'value3' });
+    var failingBar = Bar.build({ field: 'value3' });
 
-    return expect(failingBar.validate()).to.be.rejected.then(errors => {
+    return failingBar.validate().then(function(errors) {
+      expect(errors).not.to.be.null;
       expect(errors.get('field')).to.have.length(1);
-      expect(errors.get('field')[0].message).to.equal('Validation isIn on field failed');
+      expect(errors.get('field')[0].message).to.equal('Validation isIn failed');
     });
   });
 
   it('skips validations for the given fields', function() {
-    const values = ['value1', 'value2'];
+    var values = ['value1', 'value2'];
 
-    const Bar = this.sequelize.define('Bar' + config.rand(), {
+    var Bar = this.sequelize.define('Bar' + config.rand(), {
       field: {
         type: Sequelize.ENUM,
-        values,
+        values: values,
         validate: {
           isIn: [values]
         }
       }
     });
 
-    const failingBar = Bar.build({ field: 'value3' });
+    var failingBar = Bar.build({ field: 'value3' });
 
-    return expect(failingBar.validate({ skip: ['field'] })).not.to.be.rejected;
+    return failingBar.validate({ skip: ['field'] }).then(function(errors) {
+      expect(errors).not.to.exist;
+    });
   });
 
   it('raises an error if saving a different value into an immutable field', function() {
-    const User = this.sequelize.define('User', {
+    var User = this.sequelize.define('User', {
       name: {
         type: Sequelize.STRING,
         validate: {
@@ -556,19 +542,22 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
       }
     });
 
-    return User.sync({force: true}).then(() => {
-      return User.create({ name: 'RedCat' }).then(user => {
+    return User.sync({force: true}).then(function() {
+      return User.create({ name: 'RedCat' }).then(function(user) {
         expect(user.getDataValue('name')).to.equal('RedCat');
         user.setDataValue('name', 'YellowCat');
-        return expect(user.save()).to.be.rejected.then(errors => {
-          expect(errors.get('name')[0].message).to.eql('Validation isImmutable on name failed');
-        });
+        return user.save()
+          .catch(function(errors) {
+            expect(errors).to.not.be.null;
+            expect(errors).to.be.an.instanceOf(Error);
+            expect(errors.get('name')[0].message).to.eql('Validation isImmutable failed');
+          });
       });
     });
   });
 
   it('allows setting an immutable field if the record is unsaved', function() {
-    const User = this.sequelize.define('User', {
+    var User = this.sequelize.define('User', {
       name: {
         type: Sequelize.STRING,
         validate: {
@@ -577,109 +566,125 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
       }
     });
 
-    const user = User.build({ name: 'RedCat' });
+    var user = User.build({ name: 'RedCat' });
     expect(user.getDataValue('name')).to.equal('RedCat');
 
     user.setDataValue('name', 'YellowCat');
-    return expect(user.validate()).not.to.be.rejected;
+    return user.validate().then(function(errors) {
+      expect(errors).not.to.be.ok;
+    });
   });
 
   it('raises an error for array on a STRING', function() {
-    const User = this.sequelize.define('User', {
+    var User = this.sequelize.define('User', {
       'email': {
         type: Sequelize.STRING
       }
     });
 
-    return expect(User.build({
+    return User.build({
       email: ['iama', 'dummy.com']
-    }).validate()).to.be.rejectedWith(Sequelize.ValidationError);
+    }).validate().then(function(errors) {
+      expect(errors).to.be.an.instanceof(Sequelize.ValidationError);
+    });
   });
 
   it('raises an error for array on a STRING(20)', function() {
-    const User = this.sequelize.define('User', {
+    var User = this.sequelize.define('User', {
       'email': {
         type: Sequelize.STRING(20)
       }
     });
 
-    return expect(User.build({
+    return User.build({
       email: ['iama', 'dummy.com']
-    }).validate()).to.be.rejectedWith(Sequelize.ValidationError);
+    }).validate().then(function(errors) {
+      expect(errors).to.be.an.instanceof(Sequelize.ValidationError);
+    });
   });
 
   it('raises an error for array on a TEXT', function() {
-    const User = this.sequelize.define('User', {
+    var User = this.sequelize.define('User', {
       'email': {
         type: Sequelize.TEXT
       }
     });
 
-    return expect(User.build({
+    return User.build({
       email: ['iama', 'dummy.com']
-    }).validate()).to.be.rejectedWith(Sequelize.ValidationError);
+    }).validate().then(function(errors) {
+      expect(errors).to.be.an.instanceof(Sequelize.ValidationError);
+    });
   });
 
   it('raises an error for {} on a STRING', function() {
-    const User = this.sequelize.define('User', {
+    var User = this.sequelize.define('User', {
       'email': {
         type: Sequelize.STRING
       }
     });
 
-    return expect(User.build({
+    return User.build({
       email: {lol: true}
-    }).validate()).to.be.rejectedWith(Sequelize.ValidationError);
+    }).validate().then(function(errors) {
+      expect(errors).to.be.an.instanceof(Sequelize.ValidationError);
+    });
   });
 
   it('raises an error for {} on a STRING(20)', function() {
-    const User = this.sequelize.define('User', {
+    var User = this.sequelize.define('User', {
       'email': {
         type: Sequelize.STRING(20)
       }
     });
 
-    return expect(User.build({
+    return User.build({
       email: {lol: true}
-    }).validate()).to.be.rejectedWith(Sequelize.ValidationError);
+    }).validate().then(function(errors) {
+      expect(errors).to.be.an.instanceof(Sequelize.ValidationError);
+    });
   });
 
   it('raises an error for {} on a TEXT', function() {
-    const User = this.sequelize.define('User', {
+    var User = this.sequelize.define('User', {
       'email': {
         type: Sequelize.TEXT
       }
     });
 
-    return expect(User.build({
+    return User.build({
       email: {lol: true}
-    }).validate()).to.be.rejectedWith(Sequelize.ValidationError);
+    }).validate().then(function(errors) {
+      expect(errors).to.be.an.instanceof(Sequelize.ValidationError);
+    });
   });
 
   it('does not raise an error for null on a STRING (where null is allowed)', function() {
-    const User = this.sequelize.define('User', {
+    var User = this.sequelize.define('User', {
       'email': {
         type: Sequelize.STRING
       }
     });
 
-    return expect(User.build({
+    return User.build({
       email: null
-    }).validate()).not.to.be.rejected;
+    }).validate().then(function(errors) {
+      expect(errors).not.to.be.ok;
+    });
   });
 
   it('validates VIRTUAL fields', function() {
-    const User = this.sequelize.define('user', {
+    var User = this.sequelize.define('user', {
       password_hash: Sequelize.STRING,
       salt: Sequelize.STRING,
       password: {
         type: Sequelize.VIRTUAL,
-        set(val) {
+        set: function(val) {
           this.setDataValue('password', val);
           this.setDataValue('password_hash', this.salt + val);
         },
         validate: {
-          isLongEnough(val) {
+          isLongEnough: function(val) {
             if (val.length < 7) {
               throw new Error('Please choose a longer password');
             }
@@ -689,25 +694,28 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
     });
 
     return Sequelize.Promise.all([
-      expect(User.build({
+      User.build({
         password: 'short',
         salt: '42'
-      }).validate()).to.be.rejected.then(errors => {
+      }).validate().then(function(errors) {
+        expect(errors).not.to.be.null;
         expect(errors.get('password')[0].message).to.equal('Please choose a longer password');
       }),
-      expect(User.build({
+      User.build({
         password: 'loooooooong',
         salt: '42'
-      }).validate()).not.to.be.rejected
+      }).validate().then(function(errors) {
+        expect(errors).to.be.null;
+      })
     ]);
   });
 
   it('allows me to add custom validation functions to validator.js', function() {
-    this.sequelize.Validator.extend('isExactly7Characters', val => {
+    this.sequelize.Validator.extend('isExactly7Characters', function(val) {
       return val.length === 7;
     });
 
-    const User = this.sequelize.define('User', {
+    var User = this.sequelize.define('User', {
       name: {
         type: Sequelize.STRING,
         validate: {
@@ -716,14 +724,16 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
       }
     });
 
-    return expect(User.build({
+    return User.build({
       name: 'abcdefg'
-    }).validate()).not.to.be.rejected.then(() => {
-      return expect(User.build({
+    }).validate().then(function(errors) {
+      expect(errors).to.be.null;
+
+      return User.build({
         name: 'a'
-      }).validate()).to.be.rejected;
-    }).then(errors => {
-      expect(errors.get('name')[0].message).to.equal('Validation isExactly7Characters on name failed');
+      }).validate();
+    }).then(function(errors) {
+      expect(errors.get('name')[0].message).to.equal('Validation isExactly7Characters failed');
     });
   });
 });

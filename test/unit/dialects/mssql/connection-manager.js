@@ -1,18 +1,20 @@
 'use strict';
 
-const chai = require('chai'),
-  expect = chai.expect,
-  Sequelize = require(__dirname + '/../../../../index'),
-  tedious = require('tedious'),
-  sinon = require('sinon'),
-  connectionStub = sinon.stub(tedious, 'Connection');
+var chai = require('chai')
+  , expect = chai.expect
+  , Sequelize = require(__dirname + '/../../../../index');
 
-connectionStub.returns({on() {}});
 
-describe('[MSSQL] Connection Manager', () => {
-  let instance,
-    config;
-  beforeEach(() => {
+var tedious = require('tedious')
+  , sinon = require('sinon')
+  , connectionStub = sinon.stub(tedious, 'Connection');
+
+connectionStub.returns({on: function () {}});
+
+describe('[MSSQL] Connection Manager', function () {
+  var instance
+    , config;
+  beforeEach(function () {
     config = {
       dialect: 'mssql',
       database: 'none',
@@ -26,15 +28,15 @@ describe('[MSSQL] Connection Manager', () => {
       }
     };
     instance = new Sequelize(config.database
-      , config.username
-      , config.password
-      , config);
+                             , config.username
+                             , config.password
+                             , config);    
   });
-
-  it('connectionManager._connect() Does not delete `domain` from config.dialectOptions',
-    () => {
-      expect(config.dialectOptions.domain).to.equal('TEST.COM');
-      instance.dialect.connectionManager._connect(config);
-      expect(config.dialectOptions.domain).to.equal('TEST.COM');
-    });
+  
+  it('connectionManager.$connect() Does not delete `domain` from config.dialectOptions',
+     function () {
+       expect(config.dialectOptions.domain).to.equal('TEST.COM');
+       instance.dialect.connectionManager.$connect(config);
+       expect(config.dialectOptions.domain).to.equal('TEST.COM');
+     });
 });

@@ -1,15 +1,16 @@
 'use strict';
 
-const Support   = require(__dirname + '/../support'),
-  expectsql = Support.expectsql,
-  current   = Support.sequelize,
-  sql       = current.dialect.QueryGenerator;
+var Support   = require(__dirname + '/../support')
+  , expectsql = Support.expectsql
+  , current   = Support.sequelize
+  , sql       = current.dialect.QueryGenerator
+  , current = Support.sequelize;
 
 // Notice: [] will be replaced by dialect specific tick/quote character when there is not dialect specific expectation but only a default expectation
 
-suite(Support.getTestDialectTeaser('SQL'), () => {
-  suite('addIndex', () => {
-    test('naming', () => {
+suite(Support.getTestDialectTeaser('SQL'), function() {
+  suite('addIndex', function () {
+    test('naming', function () {
       expectsql(sql.addIndexQuery('table', ['column1', 'column2'], {}, 'table'), {
         default: 'CREATE INDEX [table_column1_column2] ON [table] ([column1], [column2])',
         mysql: 'ALTER TABLE `table` ADD INDEX `table_column1_column2` (`column1`, `column2`)'
@@ -17,7 +18,7 @@ suite(Support.getTestDialectTeaser('SQL'), () => {
 
       if (current.dialect.supports.schemas) {
         expectsql(sql.addIndexQuery('schema.table', ['column1', 'column2'], {}), {
-          default: 'CREATE INDEX [schema_table_column1_column2] ON [schema].[table] ([column1], [column2])'
+          default: 'CREATE INDEX [schema_table_column1_column2] ON [schema].[table] ([column1], [column2])',
         });
 
         expectsql(sql.addIndexQuery({
@@ -28,7 +29,7 @@ suite(Support.getTestDialectTeaser('SQL'), () => {
         });
 
         expectsql(sql.addIndexQuery(sql.quoteTable(sql.addSchema({
-          _schema: 'schema',
+          $schema: 'schema',
           tableName: 'table'
         })), ['column1', 'column2'], {}), {
           default: 'CREATE INDEX [schema_table_column1_column2] ON [schema].[table] ([column1], [column2])'
@@ -36,11 +37,11 @@ suite(Support.getTestDialectTeaser('SQL'), () => {
       }
     });
 
-    test('type and method', () => {
+    test('type and method', function () {
       expectsql(sql.addIndexQuery('User', ['fieldC'], {
-        type: 'FULLTEXT',
-        concurrently: true
-      }), {
+          type: 'FULLTEXT',
+          concurrently: true
+        }), {
         sqlite: 'CREATE INDEX `user_field_c` ON `User` (`fieldC`)',
         mssql: 'CREATE FULLTEXT INDEX [user_field_c] ON [User] ([fieldC])',
         postgres: 'CREATE INDEX CONCURRENTLY "user_field_c" ON "User" ("fieldC")',
@@ -48,19 +49,19 @@ suite(Support.getTestDialectTeaser('SQL'), () => {
       });
 
       expectsql(sql.addIndexQuery('User', ['fieldB', {attribute: 'fieldA', collate: 'en_US', order: 'DESC', length: 5}], {
-        name: 'a_b_uniq',
-        unique: true,
-        method: 'BTREE',
-        parser: 'foo'
-      }), {
+          name: 'a_b_uniq',
+          unique: true,
+          method: 'BTREE',
+          parser: 'foo'
+        }), {
         sqlite: 'CREATE UNIQUE INDEX `a_b_uniq` ON `User` (`fieldB`, `fieldA` COLLATE `en_US` DESC)',
         mssql: 'CREATE UNIQUE INDEX [a_b_uniq] ON [User] ([fieldB], [fieldA] DESC)',
         postgres: 'CREATE UNIQUE INDEX "a_b_uniq" ON "User" USING BTREE ("fieldB", "fieldA" COLLATE "en_US" DESC)',
-        mysql: 'ALTER TABLE `User` ADD UNIQUE INDEX `a_b_uniq` USING BTREE (`fieldB`, `fieldA`(5) DESC) WITH PARSER foo'
+        mysql: 'ALTER TABLE `User` ADD UNIQUE INDEX `a_b_uniq` USING BTREE (`fieldB`, `fieldA`(5) DESC) WITH PARSER foo',
       });
     });
 
-    test('POJO field', () => {
+    test('POJO field', function () {
       expectsql(sql.addIndexQuery('table', [{ attribute: 'column', collate: 'BINARY', length: 5, order: 'DESC'}], {}, 'table'), {
         default: 'CREATE INDEX [table_column] ON [table] ([column] COLLATE [BINARY] DESC)',
         mssql: 'CREATE INDEX [table_column] ON [table] ([column] DESC)',
@@ -68,7 +69,7 @@ suite(Support.getTestDialectTeaser('SQL'), () => {
       });
     });
 
-    test('function', () => {
+    test('function', function () {
       expectsql(sql.addIndexQuery('table', [current.fn('UPPER', current.col('test'))], { name: 'myindex'}), {
         default: 'CREATE INDEX [myindex] ON [table] (UPPER([test]))',
         mysql: 'ALTER TABLE `table` ADD INDEX `myindex` (UPPER(`test`))'
@@ -76,7 +77,7 @@ suite(Support.getTestDialectTeaser('SQL'), () => {
     });
 
     if (current.dialect.supports.index.using === 2) {
-      test('USING', () => {
+      test('USING', function () {
         expectsql(sql.addIndexQuery('table', {
           fields: ['event'],
           using: 'gin'
@@ -86,16 +87,15 @@ suite(Support.getTestDialectTeaser('SQL'), () => {
       });
     }
 
-    if (current.dialect.supports.index.where) {
-      test('WHERE', () => {
+    if (current.dialect.supports.index.using === 2) {
+      test('WHERE', function () {
         expectsql(sql.addIndexQuery('table', {
           fields: ['type'],
           where: {
             type: 'public'
           }
         }), {
-          postgres: 'CREATE INDEX "table_type" ON "table" ("type") WHERE "type" = \'public\'',
-          mssql: 'CREATE INDEX [table_type] ON [table] ([type]) WHERE [type] = N\'public\''
+          postgres: 'CREATE INDEX "table_type" ON "table" ("type") WHERE "type" = \'public\''
         });
 
         expectsql(sql.addIndexQuery('table', {
@@ -109,26 +109,13 @@ suite(Support.getTestDialectTeaser('SQL'), () => {
             }
           }
         }), {
-          postgres: 'CREATE INDEX "table_type" ON "table" ("type") WHERE ("type" = \'group\' OR "type" = \'private\')',
-          mssql: 'CREATE INDEX [table_type] ON [table] ([type]) WHERE ([type] = N\'group\' OR [type] = N\'private\')'
-        });
-
-        expectsql(sql.addIndexQuery('table', {
-          fields: ['type'],
-          where: {
-            type: {
-              $ne: null
-            }
-          }
-        }), {
-          postgres: 'CREATE INDEX "table_type" ON "table" ("type") WHERE "type" IS NOT NULL',
-          mssql: 'CREATE INDEX [table_type] ON [table] ([type]) WHERE [type] IS NOT NULL'
+          postgres: 'CREATE INDEX "table_type" ON "table" ("type") WHERE ("type" = \'group\' OR "type" = \'private\')'
         });
       });
     }
 
-    if (current.dialect.supports.JSONB) {
-      test('operator', () => {
+    if (current.dialect.supports.JSON) {
+      test('operator', function () {
         expectsql(sql.addIndexQuery('table', {
           fields: ['event'],
           using: 'gin',
@@ -140,7 +127,7 @@ suite(Support.getTestDialectTeaser('SQL'), () => {
     }
 
     if (current.dialect.name === 'postgres') {
-      test('show indexes', () => {
+      test('show indexes', function () {
         expectsql(sql.showIndexesQuery('table'), {
           postgres: 'SELECT i.relname AS name, ix.indisprimary AS primary, ix.indisunique AS unique, ix.indkey AS indkey, ' +
           'array_agg(a.attnum) as column_indexes, array_agg(a.attname) AS column_names, pg_get_indexdef(ix.indexrelid) ' +
@@ -159,15 +146,5 @@ suite(Support.getTestDialectTeaser('SQL'), () => {
         });
       });
     }
-  });
-
-  suite('removeIndex', () => {
-    test('naming', () => {
-      expectsql(sql.removeIndexQuery('table', ['column1', 'column2'], {}, 'table'), {
-        mysql: 'DROP INDEX `table_column1_column2` ON `table`',
-        mssql: 'DROP INDEX [table_column1_column2] ON [table]',
-        default: 'DROP INDEX IF EXISTS [table_column1_column2]'
-      });
-    });
   });
 });

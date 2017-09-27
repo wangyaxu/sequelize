@@ -1,17 +1,17 @@
 'use strict';
 
-const chai = require('chai'),
-  expect = chai.expect,
-  Support = require(__dirname + '/../support'),
-  DataTypes = require(__dirname + '/../../../lib/data-types'),
-  dialect = Support.getTestDialect(),
-  semver = require('semver');
+/* jshint -W030 */
+/* jshint -W110 */
+var chai = require('chai')
+  , expect = chai.expect
+  , Support = require(__dirname + '/../support')
+  , DataTypes = require(__dirname + '/../../../lib/data-types');
 
-const current = Support.sequelize;
+var current = Support.sequelize;
 
-describe(Support.getTestDialectTeaser('Model'), () => {
+describe(Support.getTestDialectTeaser('Model'), function() {
   if (current.dialect.supports.GEOMETRY) {
-    describe('GEOMETRY', () => {
+    describe('GEOMETRY', function() {
       beforeEach(function() {
         this.User = this.sequelize.define('User', {
           username: DataTypes.STRING,
@@ -21,47 +21,47 @@ describe(Support.getTestDialectTeaser('Model'), () => {
         return this.User.sync({ force: true });
       });
 
-      it('works with aliases fields', function() {
-        const Pub = this.sequelize.define('Pub', {
-            location: {field: 'coordinates', type: DataTypes.GEOMETRY}
-          }),
-          point = {type: 'Point', coordinates: [39.807222, -76.984722]};
+      it('works with aliases fields', function () {
+        var Pub = this.sequelize.define('Pub', {
+          location: {field: 'coordinates', type: DataTypes.GEOMETRY}
+        })
+          , point = {type: 'Point', coordinates: [39.807222, -76.984722]};
 
-        return Pub.sync({ force: true }).then(() => {
+        return Pub.sync({ force: true }).then(function () {
           return Pub.create({location: point});
-        }).then(pub => {
+        }).then(function (pub) {
           expect(pub).not.to.be.null;
           expect(pub.location).to.be.deep.eql(point);
         });
       });
 
       it('should create a geometry object', function() {
-        const User = this.User;
-        const point = { type: 'Point', coordinates: [39.807222, -76.984722]};
+        var User = this.User;
+        var point = { type: 'Point', coordinates: [39.807222,-76.984722]};
 
-        return User.create({username: 'username', geometry: point }).then(newUser => {
+        return User.create({username: 'username', geometry: point }).then(function(newUser) {
           expect(newUser).not.to.be.null;
           expect(newUser.geometry).to.be.deep.eql(point);
         });
       });
 
       it('should update a geometry object', function() {
-        const User = this.User;
-        const point1 = { type: 'Point', coordinates: [39.807222, -76.984722]},
-          point2 = { type: 'Point', coordinates: [49.807222, -86.984722]};
-        const props = {username: 'username', geometry: point1};
+        var User = this.User;
+        var point1 = { type: 'Point', coordinates: [39.807222,-76.984722]}
+          , point2 = { type: 'Point', coordinates: [49.807222,-86.984722]};
+        var props = {username: 'username', geometry: point1};
 
-        return User.create(props).then(() => {
+        return User.create(props).then(function(user) {
           return User.update({geometry: point2}, {where: {username: props.username}});
-        }).then(() => {
+        }).then(function(count) {
           return User.findOne({where: {username: props.username}});
-        }).then(user => {
+        }).then(function(user) {
           expect(user.geometry).to.be.deep.eql(point2);
         });
       });
     });
 
-    describe('GEOMETRY(POINT)', () => {
+    describe('GEOMETRY(POINT)', function() {
       beforeEach(function() {
         this.User = this.sequelize.define('User', {
           username: DataTypes.STRING,
@@ -72,32 +72,32 @@ describe(Support.getTestDialectTeaser('Model'), () => {
       });
 
       it('should create a geometry object', function() {
-        const User = this.User;
-        const point = { type: 'Point', coordinates: [39.807222, -76.984722]};
+        var User = this.User;
+        var point = { type: 'Point', coordinates: [39.807222,-76.984722]};
 
-        return User.create({username: 'username', geometry: point }).then(newUser => {
+        return User.create({username: 'username', geometry: point }).then(function(newUser) {
           expect(newUser).not.to.be.null;
           expect(newUser.geometry).to.be.deep.eql(point);
         });
       });
 
       it('should update a geometry object', function() {
-        const User = this.User;
-        const point1 = { type: 'Point', coordinates: [39.807222, -76.984722]},
-          point2 = { type: 'Point', coordinates: [49.807222, -86.984722]};
-        const props = {username: 'username', geometry: point1};
+        var User = this.User;
+        var point1 = { type: 'Point', coordinates: [39.807222,-76.984722]}
+          , point2 = { type: 'Point', coordinates: [49.807222,-86.984722]};
+        var props = {username: 'username', geometry: point1};
 
-        return User.create(props).then(() => {
+        return User.create(props).then(function(user) {
           return User.update({geometry: point2}, {where: {username: props.username}});
-        }).then(() => {
+        }).then(function(count) {
           return User.findOne({where: {username: props.username}});
-        }).then(user => {
+        }).then(function(user) {
           expect(user.geometry).to.be.deep.eql(point2);
         });
       });
     });
 
-    describe('GEOMETRY(LINESTRING)', () => {
+    describe('GEOMETRY(LINESTRING)', function() {
       beforeEach(function() {
         this.User = this.sequelize.define('User', {
           username: DataTypes.STRING,
@@ -108,32 +108,32 @@ describe(Support.getTestDialectTeaser('Model'), () => {
       });
 
       it('should create a geometry object', function() {
-        const User = this.User;
-        const point = { type: 'LineString', 'coordinates': [ [100.0, 0.0], [101.0, 1.0] ] };
+        var User = this.User;
+        var point = { type: 'LineString', 'coordinates': [ [100.0, 0.0], [101.0, 1.0] ] };
 
-        return User.create({username: 'username', geometry: point }).then(newUser => {
+        return User.create({username: 'username', geometry: point }).then(function(newUser) {
           expect(newUser).not.to.be.null;
           expect(newUser.geometry).to.be.deep.eql(point);
         });
       });
 
       it('should update a geometry object', function() {
-        const User = this.User;
-        const point1 = { type: 'LineString', coordinates: [ [100.0, 0.0], [101.0, 1.0] ] },
-          point2 = { type: 'LineString', coordinates: [ [101.0, 0.0], [102.0, 1.0] ] };
-        const props = {username: 'username', geometry: point1};
+        var User = this.User;
+        var point1 = { type: 'LineString', coordinates: [ [100.0, 0.0], [101.0, 1.0] ] }
+          , point2 = { type: 'LineString', coordinates: [ [101.0, 0.0], [102.0, 1.0] ] };
+        var props = {username: 'username', geometry: point1};
 
-        return User.create(props).then(() => {
+        return User.create(props).then(function(user) {
           return User.update({geometry: point2}, {where: {username: props.username}});
-        }).then(() => {
+        }).then(function(count) {
           return User.findOne({where: {username: props.username}});
-        }).then(user => {
+        }).then(function(user) {
           expect(user.geometry).to.be.deep.eql(point2);
         });
       });
     });
 
-    describe('GEOMETRY(POLYGON)', () => {
+    describe('GEOMETRY(POLYGON)', function() {
       beforeEach(function() {
         this.User = this.sequelize.define('User', {
           username: DataTypes.STRING,
@@ -144,40 +144,41 @@ describe(Support.getTestDialectTeaser('Model'), () => {
       });
 
       it('should create a geometry object', function() {
-        const User = this.User;
-        const point = { type: 'Polygon', coordinates: [
-          [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
-            [100.0, 1.0], [100.0, 0.0] ]
-        ]};
+        var User = this.User;
+        var point = { type: 'Polygon', coordinates: [
+             [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
+               [100.0, 1.0], [100.0, 0.0] ]
+             ]};
 
-        return User.create({username: 'username', geometry: point }).then(newUser => {
+        return User.create({username: 'username', geometry: point }).then(function(newUser) {
           expect(newUser).not.to.be.null;
           expect(newUser.geometry).to.be.deep.eql(point);
         });
       });
 
       it('should update a geometry object', function() {
-        const User = this.User;
-        const polygon1 = { type: 'Polygon', coordinates: [
-            [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0] ]
-          ]},
-          polygon2 = { type: 'Polygon', coordinates: [
-            [ [100.0, 0.0], [102.0, 0.0], [102.0, 1.0],
-              [100.0, 1.0], [100.0, 0.0] ]
-          ]};
-        const props = {username: 'username', geometry: polygon1};
+        var User = this.User;
+        var polygon1 = { type: 'Polygon', coordinates: [
+              [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
+                [100.0, 1.0], [100.0, 0.0] ]
+              ]}
+          , polygon2 = { type: 'Polygon', coordinates: [
+              [ [100.0, 0.0], [102.0, 0.0], [102.0, 1.0],
+                [100.0, 1.0], [100.0, 0.0] ]
+              ]};
+        var props = {username: 'username', geometry: polygon1};
 
-        return User.create(props).then(() => {
+        return User.create(props).then(function(user) {
           return User.update({geometry: polygon2}, {where: {username: props.username}});
-        }).then(() => {
+        }).then(function(count) {
           return User.findOne({where: {username: props.username}});
-        }).then(user => {
+        }).then(function(user) {
           expect(user.geometry).to.be.deep.eql(polygon2);
         });
       });
     });
 
-    describe('sql injection attacks', () => {
+    describe('sql injection attacks', function () {
       beforeEach(function() {
         this.Model = this.sequelize.define('Model', {
           location: DataTypes.GEOMETRY
@@ -185,32 +186,26 @@ describe(Support.getTestDialectTeaser('Model'), () => {
         return this.sequelize.sync({ force: true });
       });
 
-      it('should properly escape the single quotes', function() {
+      it('should properly escape the single quotes', function () {
         return this.Model.create({
           location: {
-            type: 'Point',
+            type: "Point",
             properties: {
               exploit: "'); DELETE YOLO INJECTIONS; -- "
             },
-            coordinates: [39.807222, -76.984722]
+            coordinates: [39.807222,-76.984722]
           }
         });
       });
 
-      it('should properly escape the single quotes in coordinates', function() {
-
-        // MySQL 5.7, those guys finally fixed this
-        if (dialect === 'mysql' && semver.gte(this.sequelize.options.databaseVersion, '5.7.0')) {
-          return;
-        }
-
+      it('should properly escape the single quotes on coordinates', function () {
         return this.Model.create({
           location: {
-            type: 'Point',
+            type: "Point",
             properties: {
               exploit: "'); DELETE YOLO INJECTIONS; -- "
             },
-            coordinates: [39.807222, "'); DELETE YOLO INJECTIONS; --"]
+            coordinates: [39.807222,"'); DELETE YOLO INJECTIONS; -- "]
           }
         });
       });

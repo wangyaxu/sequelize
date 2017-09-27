@@ -1,28 +1,29 @@
 'use strict';
 
-const chai = require('chai');
-const expect = chai.expect;
-const Support = require(__dirname + '/../support');
-const DataTypes = require(__dirname + '/../../../lib/data-types');
-const current = Support.sequelize;
+/* jshint -W030 */
+var chai = require('chai')
+  , expect = chai.expect
+  , Support   = require(__dirname + '/../support')
+  , DataTypes = require(__dirname + '/../../../lib/data-types')
+  , current   = Support.sequelize;
 
-describe(Support.getTestDialectTeaser('Instance'), () => {
-  describe('previous', () => {
-    it('should return correct previous value', () => {
-      const Model = current.define('Model', {
+describe(Support.getTestDialectTeaser('Instance'), function () {
+  describe('previous', function () {
+    it('should return correct previous value', function () {
+      var Model = current.define('Model', {
         text: DataTypes.STRING,
         textCustom: {
           type: DataTypes.STRING,
-          set(val) {
+          set: function (val) {
             this.setDataValue('textCustom', val);
           },
-          get() {
+          get: function () {
             this.getDataValue('textCustom');
           }
         }
       });
 
-      const instance = Model.build({ text: 'a', textCustom: 'abc' });
+      var instance = Model.build({ text: 'a', textCustom: 'abc' });
       expect(instance.previous('text')).to.be.not.ok;
       expect(instance.previous('textCustom')).to.be.not.ok;
 

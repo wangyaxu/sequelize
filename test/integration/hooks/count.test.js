@@ -1,11 +1,12 @@
 'use strict';
 
-const chai = require('chai'),
-  expect = chai.expect,
-  Support = require(__dirname + '/../support'),
-  DataTypes = require(__dirname + '/../../../lib/data-types');
+/* jshint -W030 */
+var chai = require('chai')
+, expect = chai.expect
+, Support = require(__dirname + '/../support')
+, DataTypes = require(__dirname + '/../../../lib/data-types');
 
-describe(Support.getTestDialectTeaser('Hooks'), () => {
+describe(Support.getTestDialectTeaser('Hooks'), function() {
   beforeEach(function() {
     this.User = this.sequelize.define('User', {
       username: {
@@ -20,7 +21,7 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
     return this.sequelize.sync({ force: true });
   });
 
-  describe('#count', () => {
+  describe('#count', function() {
     beforeEach(function() {
       return this.User.bulkCreate([
         {username: 'adam', mood: 'happy'},
@@ -29,22 +30,22 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
       ]);
     });
 
-    describe('on success', () => {
+    describe('on success', function() {
       it('hook runs', function() {
-        let beforeHook = false;
+        var beforeHook = false;
 
-        this.User.beforeCount(() => {
+        this.User.beforeCount(function() {
           beforeHook = true;
         });
 
-        return this.User.count().then(count => {
+        return this.User.count().then(function(count) {
           expect(count).to.equal(3);
           expect(beforeHook).to.be.true;
         });
       });
 
       it('beforeCount hook can change options', function() {
-        this.User.beforeCount(options => {
+        this.User.beforeCount(function(options) {
           options.where.username = 'adam';
         });
 
@@ -52,9 +53,9 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
       });
     });
 
-    describe('on error', () => {
+    describe('on error', function() {
       it('in beforeCount hook returns error', function() {
-        this.User.beforeCount(() => {
+        this.User.beforeCount(function() {
           throw new Error('Oops!');
         });
 

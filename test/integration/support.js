@@ -1,9 +1,9 @@
 'use strict';
 
-const Support = require('../support'),
-  dialect = Support.getTestDialect();
+var Support = require('../support')
+  , dialect = Support.getTestDialect();
 
-before(() => {
+before(function() {
   if (dialect !== 'postgres' && dialect !== 'postgres-native') {
     return;
   }
@@ -18,7 +18,7 @@ beforeEach(function() {
   return Support.clearDatabase(this.sequelize);
 });
 
-afterEach(function() {
+afterEach(function () {
   try {
     this.sequelize.test.verifyNoRunningQueries();
   } catch (err) {

@@ -1,16 +1,14 @@
-# Imprint 
-
-- Boring legal stuff for the rest of us.
+# Imprint - Boring legal stuff for the rest of us.
 As there are people who are suing for fun and glory, you can find the respective information about the author of the page right here. Have fun reading ...
 
 ## AUTHOR(S)
 
 ```
 Main author:
-
+ 
 Sascha Depold
-Uhlandstr. 160
-10719 Berlin
+Uhlandstr. 122
+10717 Berlin
 sascha [at] depold [dot] com
 [plus] 49 152 [slash] 03878582
 ```

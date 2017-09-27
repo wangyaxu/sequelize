@@ -1,21 +1,22 @@
 'use strict';
 
-const chai = require('chai'),
-  expect = chai.expect,
-  Support = require(__dirname + '/../../support'),
-  dialect = Support.getTestDialect(),
-  DataTypes = require(__dirname + '/../../../../lib/data-types'),
-  _ = require('lodash');
+/* jshint -W030 */
+var chai = require('chai')
+  , expect = chai.expect
+  , Support = require(__dirname + '/../../support')
+  , dialect = Support.getTestDialect()
+  , DataTypes = require(__dirname + '/../../../../lib/data-types')
+  , _ = require('lodash');
 
 if (dialect.match(/^postgres/)) {
-  describe('[POSTGRES] Sequelize', () => {
+  describe('[POSTGRES] Sequelize', function() {
     function checkTimezoneParsing(baseOptions) {
-      const options = _.extend({}, baseOptions, { timezone: 'Asia/Kolkata', timestamps: true });
-      const sequelize = Support.createSequelizeInstance(options);
+      var options = _.extend({}, baseOptions, { timezone: 'Asia/Kolkata', timestamps: true });
+      var sequelize = Support.createSequelizeInstance(options);
 
-      const tzTable = sequelize.define('tz_table', { foo: DataTypes.STRING });
-      return tzTable.sync({force: true}).then(() => {
-        return tzTable.create({foo: 'test'}).then(row => {
+      var tzTable = sequelize.define('tz_table', { foo: DataTypes.STRING });
+      return tzTable.sync({force: true}).then(function() {
+        return tzTable.create({foo: 'test'}).then(function(row) {
           expect(row).to.be.not.null;
         });
       });

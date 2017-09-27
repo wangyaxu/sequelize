@@ -1,12 +1,13 @@
 'use strict';
 
-const chai = require('chai'),
-  expect = chai.expect,
-  Support = require(__dirname + '/../support'),
-  DataTypes = require(__dirname + '/../../../lib/data-types'),
-  sinon = require('sinon');
+/* jshint -W030 */
+var chai = require('chai')
+  , expect = chai.expect
+  , Support = require(__dirname + '/../support')
+  , DataTypes = require(__dirname + '/../../../lib/data-types')
+  , sinon = require('sinon');
 
-describe(Support.getTestDialectTeaser('Hooks'), () => {
+describe(Support.getTestDialectTeaser('Hooks'), function() {
   beforeEach(function() {
     this.User = this.sequelize.define('User', {
       username: {
@@ -21,17 +22,17 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
     return this.sequelize.sync({ force: true });
   });
 
-  describe('#destroy', () => {
-    describe('on success', () => {
+  describe('#destroy', function() {
+    describe('on success', function() {
       it('should run hooks', function() {
-        const beforeHook = sinon.spy(),
-          afterHook = sinon.spy();
+        var beforeHook = sinon.spy()
+          , afterHook = sinon.spy();
 
         this.User.beforeDestroy(beforeHook);
         this.User.afterDestroy(afterHook);
 
-        return this.User.create({username: 'Toni', mood: 'happy'}).then(user => {
-          return user.destroy().then(() => {
+        return this.User.create({username: 'Toni', mood: 'happy'}).then(function(user) {
+          return user.destroy().then(function() {
             expect(beforeHook).to.have.been.calledOnce;
             expect(afterHook).to.have.been.calledOnce;
           });
@@ -39,19 +40,19 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
       });
     });
 
-    describe('on error', () => {
+    describe('on error', function() {
       it('should return an error from before', function() {
-        const beforeHook = sinon.spy(),
-          afterHook = sinon.spy();
+        var beforeHook = sinon.spy()
+          , afterHook = sinon.spy();
 
-        this.User.beforeDestroy(() => {
+        this.User.beforeDestroy(function(user, options) {
           beforeHook();
           throw new Error('Whoops!');
         });
         this.User.afterDestroy(afterHook);
 
-        return this.User.create({username: 'Toni', mood: 'happy'}).then(user => {
-          return expect(user.destroy()).to.be.rejected.then(() => {
+        return this.User.create({username: 'Toni', mood: 'happy'}).then(function(user) {
+          return expect(user.destroy()).to.be.rejected.then(function() {
             expect(beforeHook).to.have.been.calledOnce;
             expect(afterHook).not.to.have.been.called;
           });
@@ -59,17 +60,17 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
       });
 
       it('should return an error from after', function() {
-        const beforeHook = sinon.spy(),
-          afterHook = sinon.spy();
+        var beforeHook = sinon.spy()
+          , afterHook = sinon.spy();
 
         this.User.beforeDestroy(beforeHook);
-        this.User.afterDestroy(() => {
+        this.User.afterDestroy(function(user, options) {
           afterHook();
           throw new Error('Whoops!');
         });
 
-        return this.User.create({username: 'Toni', mood: 'happy'}).then(user => {
-          return expect(user.destroy()).to.be.rejected.then(() => {
+        return this.User.create({username: 'Toni', mood: 'happy'}).then(function(user) {
+          return expect(user.destroy()).to.be.rejected.then(function() {
             expect(beforeHook).to.have.been.calledOnce;
             expect(afterHook).to.have.been.calledOnce;
           });
